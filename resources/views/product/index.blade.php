@@ -22,7 +22,7 @@
                     <select name="kategori" class="form-control">
                         <option value="" selected>Pilih Kategori</option>
                         @foreach ($kategoriList as $kategoriOption)
-                            <option value="{{ $kategoriOption }}">{{ $kategoriOption }}</option>
+                            <option value="{{ $kategoriOption['name'] }}">{{ $kategoriOption['name'] }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -65,18 +65,18 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($devices as $index => $device)
+                            @forelse ($semuaProduct as $index => $product)
                                 <tr>
-                                    <td>{{ $devices->firstItem() + $index }}</td>
+                                    <td>{{ $semuaProduct->firstItem() + $index }}</td>
                                     <td>
                                         <a
-                                            href="{{ route('product.detail', ['id' => $device->id, 'type' => $device->type]) }}">
-                                            {{ $device->nama }}
+                                            href="{{ route('product.detail', ['id' => $product->id, 'type' => $product->type]) }}">
+                                            {{ $product->nama }}
                                         </a>
                                     </td>
-                                    <td>{{ $device->kategori }}</td>
-                                    <td>{{ $device->type }}</td>
-                                    <td>Rp{{ number_format($device->harga, 0, ',', '.') }}</td>
+                                    <td>{{ $product->kategori }}</td>
+                                    <td>{{ $product->type }}</td>
+                                    <td>Rp{{ number_format($product->harga, 0, ',', '.') }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -87,7 +87,7 @@
                     </table>
 
                     <!-- Paginasi -->
-                    {{ $devices->links('vendor.pagination.default') }}
+                    {{ $semuaProduct->links('vendor.pagination.default') }}
                 </div>
 
                 <!-- Tab Product Analysis  -->

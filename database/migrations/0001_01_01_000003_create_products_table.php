@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->string('id')->primary();
+            $table->string('ginee_id')->nullable();
+            $table->string('type', 7)->default('Product')->nullable();
             $table->string('name', 300);
             $table->string('spu', 256)->nullable();
-            $table->string('full_category_id')->nullable();
-            $table->string('full_category_name')->nullable();
+            $table->json('full_category_id')->nullable();
+            $table->json('full_category_name')->nullable();
             $table->string('brand', 20)->nullable();
             $table->string('sale_status')->default('FOR_SALE')->nullable();
             $table->enum('condition', ['NEW', 'USED'])->default('NEW')->nullable();;
@@ -34,7 +36,7 @@ return new class extends Migration
             $table->integer('width')->nullable();
             $table->integer('height')->nullable();
             $table->integer('weight')->nullable();
-            $table->boolean('preorder')->default(false);
+            $table->string('preorder')->default('PRODUCT_OFF')->nullable();
             $table->integer('preorder_duration')->nullable();
             $table->string('preorder_unit')->nullable();
             $table->string('customs_chinese_name', 200)->nullable();
@@ -44,7 +46,7 @@ return new class extends Migration
             $table->integer('gross_weight')->nullable();
             $table->string('source_url', 150)->nullable();
             $table->integer('purchase_duration')->nullable();
-            $table->string('purchase_unit')->nullable();
+            $table->string('purchase_unit')->default('HOUR')->nullable();
             $table->decimal('sales_tax_amount', 12, 2)->nullable();
             $table->string('remarks1', 50)->nullable();
             $table->string('remarks2', 50)->nullable();

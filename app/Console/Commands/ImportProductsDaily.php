@@ -15,6 +15,7 @@ class ImportProductsDaily extends Command
     {
         $this->info('Importing products...');
         $gineOMSService = new GineeOMSService();
+        $categories = $gineOMSService->listCategories();
         $totalProducts = $gineOMSService->listMasterProducts()['total'];
 
         if ($totalProducts === 0) {
@@ -27,29 +28,40 @@ class ImportProductsDaily extends Command
             $data = $gineOMSService->getMasterProductDetail($productId);
 
             $product = Product::updateOrCreate(
-                ['id' => $data['productId']],
+                ['ginee_id' => $data['productId']],
                 [
-                    'id' => $data['productId'],
+                    'ginee_id' => $data['productId'],
                     'name' => $data['name'],
-                    'spu' => $data['spu'] ?? null,
-                    'full_category_id' => !empty($data['fullCategoryId']) ? $data['fullCategoryId'][0] : null,
-                    'full_category_name' => !empty($data['fullCategoryName']) ? $data['fullCategoryName'][0] : null,
-                    'brand' => $data['brand'] ?? null,
-                    'sale_status' => $data['saleStatus'] ?? null,
-                    'condition' => $data['genieProductCondition'] ?? null,
-                    'min_purchase' => $data['minPurchase'] ?? 1,
-                    'short_description' => $data['shortDescription'] ?? null,
-                    'description' => $data['description'] ?? null,
+                    'spu' => $data['spu'],
+                    'full_category_id' => $data['fullCategoryId'],
+                    'full_category_name' => $gineOMSService->getFullCategoryName($categories, end($data['fullCategoryId'])),
+                    'brand' => $data['brand'],
+                    'sale_status' => $data['saleStatus'],
+                    'condition' => $data['genieProductCondition'],
+                    'has_shelf_life' => $data['extraInfo']['hasShelfLife'],
+                    'shelf_life_duration' => $data['extraInfo']['shelfLifePeriod'],
+                    'inbound_limit' => $data['extraInfo']['storageRestriction'],
+                    'outbound_limit' => $data['extraInfo']['deliveryRestriction'],
+                    'min_purchase' => $data['minPurchase'],
+                    'short_description' => $data['shortDescription'],
+                    'description' => $data['description'],
                     'images' => $data['images'],
-                    'length' => $data['delivery']['length'] ?? null,
-                    'width' => $data['delivery']['width'] ?? null,
-                    'height' => $data['delivery']['height'] ?? null,
-                    'weight' => $data['delivery']['weight'] ?? null,
-                    'preorder' => $data['extraInfo']['preOrder']['settingType'] === 'PRODUCT_ON',
-                    'preorder_duration' => $data['extraInfo']['preOrder']['timeToShip'] ?? null,
-                    'preorder_unit' => $data['extraInfo']['preOrder']['timeUnit'] ?? null,
-                    'source_url' => $data['costInfo']['sourceUrl'] ?? null,
-                    'sales_tax_amount' => $data['costInfo']['salesTax']['amount'] ?? 0,
+                    'length' => $data['delivery']['length'],
+                    'width' => $data['delivery']['width'],
+                    'height' => $data['delivery']['height'],
+                    'weight' => $data['delivery']['weight'],
+                    'preorder' => $data['extraInfo']['preOrder']['settingType'],
+                    'preorder_duration' => $data['extraInfo']['preOrder']['timeToShip'],
+                    'preorder_unit' => $data['extraInfo']['preOrder']['timeUnit'],
+                    'customs_chinese_name' => $data['delivery']['declareZhName'],
+                    'customs_english_name' => $data['delivery']['declareEnName'],
+                    'hs_code' => $data['delivery']['declareHsCode'],
+                    'invoice_amount' => $data['delivery']['declareAmount'],
+                    'gross_weight' => $data['delivery']['declareWeight'],
+                    'source_url' => $data['costInfo']['sourceUrl'],
+                    'purchase_duration' => $data['costInfo']['purchasingTime'],
+                    'purchase_unit' => $data['costInfo']['purchasingTimeUnit'],
+                    'sales_tax_amount' => $data['costInfo']['salesTax']['amount'],
                     'remarks1' => $data['extraInfo']['additionInfo']['remark1'] ?? null,
                     'remarks2' => $data['extraInfo']['additionInfo']['remark2'] ?? null,
                     'remarks3' => $data['extraInfo']['additionInfo']['remark3'] ?? null,
@@ -63,14 +75,15 @@ class ImportProductsDaily extends Command
             if (!empty($data['variations'])) {
                 foreach ($data['variations'] as $variation) {
                     $product->productVariations()->updateOrCreate(
-                        ['msku' => $variation['sku']],
+                        ['ginee_id' => $variation['id']],
                         [
                             'name' => $variation['productName'],
+                            'purchase_price' => null,
                             'price' => $variation['sellingPrice']['amount'],
                             'stock' => $variation['stock']['availableStock'],
                             'msku' => $variation['sku'],
-                            'barcode' => $variation['barcode'] ?? '-',
-                            'combinations' => null,
+                            'barcode' => $variation['barcode'],
+                            'combinations' => $variation['optionValues'],
                         ]
                     );
                 }

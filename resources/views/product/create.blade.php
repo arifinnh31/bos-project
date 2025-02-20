@@ -116,14 +116,13 @@
                         </div>
                     </div>
 
-
                     <div class="row">
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label for="shelf-life">Shelf Life</label>
                                 <select class="form-control" id="shelf-life" name="has_shelf_life">
-                                    <option value="false" selected>No Shelf Life</option>
-                                    <option value="true">Custom</option>
+                                    <option value="0" selected>No Shelf Life</option>
+                                    <option value="1">Custom</option>
                                 </select>
                             </div>
                         </div>
@@ -176,7 +175,7 @@
                             <div class="form-group">
                                 <label for="long-description">Long description</label>
                                 <textarea id="long-description" class="form-control" name='description'
-                                    placeholder="Type your description here and apply it to your product" maxlength="7000"></textarea>
+                                    placeholder="Type your description here and apply it to your product" maxlength="7000">{{ '<p></p>' }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -188,7 +187,7 @@
                     <div class="form-group d-flex align-items-center">
                         <label for="product-variations" class="mr-2">The product has variations</label>
                         <input type="checkbox" id="product-variations" name="has_variations" value="1"
-                            class="form-control" style="width: auto;">
+                            class="form-control" style="width: auto;" onchange="toggleVariationFields()">
                     </div>
 
                     <div id="variation-fields" style="display: none;">
@@ -199,7 +198,8 @@
                                     <label for="variation-type-1">Variation Type</label>
                                     <input type="text" id="variation-type-1" name="variantTypes[0][name]"
                                         class="form-control"
-                                        placeholder="Enter the name of the variation, for example: color, etc.">
+                                        placeholder="Enter the name of the variation, for example: color, etc."
+                                        oninput="generateVariationRows()">
                                 </div>
                             </div>
 
@@ -223,7 +223,8 @@
                                     <label for="variation-type-2">Variation Type</label>
                                     <input type="text" id="variation-type-2" name="variantTypes[1][name]"
                                         class="form-control"
-                                        placeholder="Enter the name of the variation, for example: color, etc.">
+                                        placeholder="Enter the name of the variation, for example: size, etc."
+                                        oninput="generateVariationRows()">
                                 </div>
                             </div>
 
@@ -233,7 +234,7 @@
                                     <div class="tags-input-wrapper">
                                         <div class="tags-container" id="tags-container-2"></div>
                                         <input type="text" id="tag-input-2" class="form-control tag-input"
-                                            placeholder="Enter a option, for example: Red, etc">
+                                            placeholder="Enter a option, for example: S, M, L, etc">
                                         <input type="hidden" name="variantTypes[1][values]" id="values-hidden-2">
                                     </div>
                                 </div>
@@ -253,7 +254,7 @@
                         </thead>
                         <tbody id="variations-body">
                             <tr>
-                                <td>Default</td>
+                                <td>-</td>
                                 <td>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
@@ -276,7 +277,7 @@
                                         placeholder="Barcode only supports letters, numbers and -_">
                                 </td>
                                 <input type="hidden" name="variations[0][name]" value="Default">
-                                <input type="hidden" name="variations[0][combinations]" value='{}'>
+                                <input type="hidden" name="variations[0][combinations]" value='[]'>
                             </tr>
                         </tbody>
                     </table>
@@ -330,10 +331,10 @@
                         <label for="preorder">Preorder</label>
                         <div style="display: flex; gap: 10px;">
                             <label class="radio-inline">
-                                <input type="radio" name="preorder" value="0" checked> No
+                                <input type="radio" name="preorder" value="PRODUCT_OFF" checked> No
                             </label>
                             <label class="radio-inline">
-                                <input type="radio" name="preorder" value="1" id="preorder-yes"> Yes
+                                <input type="radio" name="preorder" value="PRODUCT_ON" id="preorder-yes"> Yes
                             </label>
                         </div>
                     </div>
@@ -351,10 +352,10 @@
                                 <div class="form-group">
                                     <label for="preorder-unit">Unit</label>
                                     <select class="form-control" id="preorder-unit" name="preorder_unit">
-                                        <option value="week">Week</option>
-                                        <option value="day">Day</option>
-                                        <option value="working_days">Working Days</option>
-                                        <option value="hour">Hour</option>
+                                        <option value="WEEK">week</option>
+                                        <option value="DAY" selected>day</option>
+                                        <option value="WORK_DAY">working Days</option>
+                                        <option value="HOUR">hour</option>
                                     </select>
                                 </div>
                             </div>
@@ -433,7 +434,7 @@
                             <div class="form-group">
                                 <label for="purchase-unit">Unit</label>
                                 <select class="form-control" id="purchase-unit" name="purchase_unit">
-                                    <option value="HOUR">Hour</option>
+                                    <option value="HOUR" selected>Hour</option>
                                     <option value="WORK_DAY">Working Days</option>
                                     <option value="DAY">Day</option>
                                     <option value="WEEK">Week</option>
@@ -441,7 +442,6 @@
                                 </select>
                             </div>
                         </div>
-                        {{-- Sales Tax Amount --}}
                         <div class="col-md-4">
                             <div class="form-group ">
                                 <label for="sales-tax-amount">Sales Tax Amount (Rp)</label>
@@ -450,7 +450,7 @@
                                         <span class="input-group-text">Rp</span>
                                     </div>
                                     <input type="number" id="sales-tax-amount" name="sales_tax_amount"
-                                        class="form-control" placeholder="Please Enter">
+                                        class="form-control" placeholder="Please Enter" value="0">
                                 </div>
                             </div>
                         </div>
@@ -493,13 +493,15 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="nama_jasa"><span class="text-danger">*</span> Nama</label>
-                                <input type="text" class="form-control" id="nama_jasa" name="nama_jasa" placeholder="Please Enter">
+                                <input type="text" class="form-control" id="nama_jasa" name="nama_jasa"
+                                    placeholder="Please Enter">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="harga_beli">Harga Beli</label>
-                                <input type="number" class="form-control" id="harga_beli" name="harga_beli" placeholder="Please Enter">
+                                <input type="number" class="form-control" id="harga_beli" name="harga_beli"
+                                    placeholder="Please Enter">
                             </div>
                         </div>
                     </div>
@@ -507,7 +509,8 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="kategori_jasa">Kategori</label>
-                                <input type="text" class="form-control" id="kategori_jasa" name="kategori_jasa" placeholder="Please Enter">
+                                <input type="text" class="form-control" id="kategori_jasa" name="kategori_jasa"
+                                    placeholder="Please Enter">
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -522,7 +525,8 @@
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="harga_jual">Harga Jual</label>
-                                <input type="number" class="form-control" id="harga_jual" name="harga_jual" placeholder="Please Enter">
+                                <input type="number" class="form-control" id="harga_jual" name="harga_jual"
+                                    placeholder="Please Enter">
                             </div>
                         </div>
                     </div>
@@ -567,7 +571,7 @@
             const shelfLifeSelect = document.getElementById('shelf-life');
             const customShelfLifeDivs = document.querySelectorAll('div[id="custom-shelf-life"]');
 
-            if (shelfLifeSelect.value === 'true') {
+            if (shelfLifeSelect.value === '1') {
                 customShelfLifeDivs.forEach(div => {
                     div.style.display = 'block';
                 });
@@ -587,6 +591,7 @@
             } else {
                 variationFields.style.display = 'none';
             }
+            generateVariationRows();
         }
 
         function initializeTagsInput(containerId, inputId, hiddenId) {
@@ -602,12 +607,13 @@
                     const tagElement = document.createElement('span');
                     tagElement.className = 'tag badge badge-secondary mr-1';
                     tagElement.innerHTML = `
-                        ${tag}
-                        <span class="remove-tag" data-index="${index}">&times;</span>
-                    `;
+                    ${tag}
+                    <span class="remove-tag" data-index="${index}">&times;</span>
+                `;
                     tagsContainer.appendChild(tagElement);
                 });
                 hiddenInput.value = tags.join(',');
+                generateVariationRows(); // Regenerate rows when tags change
             }
 
             tagInput.addEventListener('keydown', function(e) {
@@ -641,27 +647,27 @@
             if (!has_variations) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>Default</td>
-            <td>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Rp</span>
+                <td>-</td>
+                <td>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Rp</span>
+                        </div>
+                        <input type="number" name="variations[0][price]" class="form-control" placeholder="Please Enter">
                     </div>
-                    <input type="number" name="variations[0][price]" class="form-control" placeholder="Please Enter">
-                </div>
-            </td>
-            <td>
-                <input type="number" name="variations[0][stock]" class="form-control" placeholder="Should be between 0-999,999" >
-            </td>
-            <td>
-                <input type="text" name="variations[0][msku]" class="form-control" placeholder="Please Enter" >
-            </td>
-            <td>
-                <input type="text" name="variations[0][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
-            </td>
-            <input type="hidden" name="variations[0][name]" value="Default">
-            <input type="hidden" name="variations[0][combinations]" value='{}'>
-        `;
+                </td>
+                <td>
+                    <input type="number" name="variations[0][stock]" class="form-control" placeholder="Should be between 0-999,999" >
+                </td>
+                <td>
+                    <input type="text" name="variations[0][msku]" class="form-control" placeholder="Please Enter" >
+                </td>
+                <td>
+                    <input type="text" name="variations[0][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
+                </td>
+                <input type="hidden" name="variations[0][name]" value="Default">
+                <input type="hidden" name="variations[0][combinations]" value='[]'>
+            `;
                 tbody.appendChild(row);
                 return;
             }
@@ -672,96 +678,49 @@
             const values2 = document.getElementById('values-hidden-2').value.split(',').filter(item => item.trim());
 
             let combinations = [];
-            if (values1.length && values2.length) {
+
+            // Jika hanya ada satu jenis variasi
+            if (values1.length && !values2.length) {
+                combinations = values1.map(val1 => [val1]);
+            }
+            // Jika hanya ada jenis variasi kedua
+            else if (!values1.length && values2.length) {
+                combinations = values2.map(val2 => [val2]);
+            }
+            // Jika ada dua jenis variasi
+            else if (values1.length && values2.length) {
                 values1.forEach(val1 => {
                     values2.forEach(val2 => {
-                        combinations.push({
-                            name: `${val1}/${val2}`,
-                            combinations: {
-                                [type1Name]: val1,
-                                [type2Name]: val2
-                            }
-                        });
+                        combinations.push([val1, val2]);
                     });
                 });
-            } else if (values1.length || values2.length) {
-                const activeValues = values1.length ? values1 : values2;
-                const activeTypeName = values1.length ? type1Name : type2Name;
-                combinations = activeValues.map(val => ({
-                    name: val,
-                    combinations: {
-                        [activeTypeName]: val
-                    }
-                }));
             }
 
             combinations.forEach((combination, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${combination.name}</td>
-            <td>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Rp</span>
+                <td>${combination.join(' / ')}</td>
+                <td>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">Rp</span>
+                        </div>
+                        <input type="number" name="variations[${index}][price]" class="form-control" placeholder="Please Enter">
                     </div>
-                    <input type="number" name="variations[${index}][price]" class="form-control" placeholder="Please Enter">
-                </div>
-            </td>
-            <td>
-                <input type="number" name="variations[${index}][stock]" class="form-control" placeholder="Should be between 0-999,999" >
-            </td>
-            <td>
-                <input type="text" name="variations[${index}][msku]" class="form-control" placeholder="Please Enter" >
-            </td>
-            <td>
-                <input type="text" name="variations[${index}][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
-            </td>
-            <input type="hidden" name="variations[${index}][name]" value="${combination.name}">
-            <input type="hidden" name="variations[${index}][combinations]" value='${JSON.stringify(combination.combinations)}'>
-        `;
-                tbody.appendChild(row);
-            });
-        }
-
-        function initializeTagsInput(containerId, inputId, hiddenId) {
-            const tagsContainer = document.getElementById(containerId);
-            const tagInput = document.getElementById(inputId);
-            const hiddenInput = document.getElementById(hiddenId);
-            let tags = [];
-
-            function renderTags() {
-                tagsContainer.innerHTML = '';
-                tags.forEach((tag, index) => {
-                    const tagElement = document.createElement('span');
-                    tagElement.className = 'tag badge badge-secondary mr-1';
-                    tagElement.innerHTML = `
-                ${tag}
-                <span class="remove-tag" data-index="${index}">&times;</span>
+                </td>
+                <td>
+                    <input type="number" name="variations[${index}][stock]" class="form-control" placeholder="Should be between 0-999,999" >
+                </td>
+                <td>
+                    <input type="text" name="variations[${index}][msku]" class="form-control" placeholder="Please Enter" >
+                </td>
+                <td>
+                    <input type="text" name="variations[${index}][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
+                </td>
+                <input type="hidden" name="variations[${index}][name]" value="${combination.join(' / ')}">
+                <input type="hidden" name="variations[${index}][combinations]" value='${JSON.stringify(combination)}'>
             `;
-                    tagsContainer.appendChild(tagElement);
-                });
-                hiddenInput.value = tags.join(',');
-                generateVariationRows(); // Regenerate rows when tags change
-            }
-
-            tagInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const value = this.value.trim();
-                    if (value && !tags.includes(value)) {
-                        tags.push(value);
-                        renderTags();
-                        this.value = '';
-                    }
-                }
-            });
-
-            tagsContainer.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-tag')) {
-                    const index = parseInt(e.target.dataset.index);
-                    tags.splice(index, 1);
-                    renderTags();
-                }
+                tbody.appendChild(row);
             });
         }
 
@@ -810,14 +769,13 @@
             togglePreorderFields();
             updatePreorderPlaceholder();
 
+            const shelfLifeSelect = document.getElementById('shelf-life');
+            shelfLifeSelect.addEventListener('change', toggleShelfLife);
+
             const has_variationsCheckbox = document.getElementById('product-variations');
             has_variationsCheckbox.addEventListener('change', function() {
                 toggleVariationFields();
-                generateVariationRows();
             });
-
-            const shelfLifeSelect = document.getElementById('shelf-life');
-            shelfLifeSelect.addEventListener('change', toggleShelfLife);
 
             initializeTagsInput('tags-container-1', 'tag-input-1', 'values-hidden-1');
             initializeTagsInput('tags-container-2', 'tag-input-2', 'values-hidden-2');

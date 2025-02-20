@@ -12,16 +12,19 @@ return new class extends Migration
     public function up()
     {
         Schema::create('product_variations', function (Blueprint $table) {
-            $table->id();
+            $table->string('id')->primary();
+            $table->string('ginee_id')->nullable();
             $table->string('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->string('name');
+            $table->decimal('purchase_price', 12, 2)->nullable();
             $table->decimal('price', 12, 2)->nullable();
             $table->integer('stock');
             $table->string('msku');
             $table->string('barcode')->nullable();
             $table->json('combinations')->nullable();
-            $table->timestamps();
+            $table->timestamp('created_at')->nullable();
+            $table->timestamp('updated_at')->nullable();
         });
     }
 

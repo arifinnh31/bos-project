@@ -15,7 +15,7 @@ class Product extends Model
     public $incrementing = false;
 
     protected $fillable = [
-        'id',
+        'ginee_id',
         'name',
         'spu',
         'full_category_id',
@@ -59,6 +59,8 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'full_category_id' => 'array',
+        'full_category_name' => 'array',
         'variant_options' => 'array',
         'images' => 'array',
     ];

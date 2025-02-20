@@ -144,7 +144,7 @@
                                         @if ($competitor['review'])
                                             @php
                                                 $selisihReview = $product->review - $competitor['review'];
-                                                $textColor = $selisihReview > 0 ? 'danger' : 'success';
+                                                $textColor = $selisihReview > 0 ? 'success' : 'danger';
                                             @endphp
                                             <span class="text-{{ $textColor }}">
                                                 {{ abs($selisihReview) }}
@@ -160,7 +160,7 @@
                                         @if ($competitor['sold'])
                                             @php
                                                 $selisihTerjual = $product->sold - $competitor['sold'];
-                                                $textColor = $selisihTerjual > 0 ? 'danger' : 'success';
+                                                $textColor = $selisihTerjual > 0 ? 'success' : 'danger';
                                             @endphp
                                             <span class="text-{{ $textColor }}">
                                                 {{ abs($selisihTerjual) }}

@@ -8,6 +8,7 @@ use App\Services\GineeOMSService;
 use App\Services\TokopediaScraperService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -22,13 +23,17 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
+        $search = $request->input('search');
+        $kategori = $request->input('kategori');
+        $type = $request->input('type');
+
         // Semua Product
         $products = Product::select(
             'products.id as id',
+            'products.type as type',
             'products.name as nama',
-            'products.full_category_name as kategori',
+            DB::raw('JSON_UNQUOTE(JSON_EXTRACT(products.full_category_name, "$[0]")) as kategori'),
             DB::raw('MIN(product_variations.price) as harga'),
-            DB::raw('"Product" as type'),
             'products.updated_at as updated_at'
         )
             ->leftJoin('product_variations', 'products.id', '=', 'product_variations.product_id')
@@ -36,10 +41,10 @@ class ProductController extends Controller
 
         $services = Service::select(
             'id',
+            'type',
             'nama_jasa as nama',
             'kategori_jasa as kategori',
             'harga_jual as harga',
-            DB::raw('"Jasa" as type'),
             'updated_at'
         );
 
@@ -48,22 +53,11 @@ class ProductController extends Controller
         $semuaProduct = DB::table(DB::raw("({$productsAndServices->toSql()}) as u"))
             ->mergeBindings($productsAndServices->getQuery());
 
-        $search = $request->input('search');
-        $kategori = $request->input('kategori');
-        $type = $request->input('type');
-
-        $kategoriList = DB::table(DB::raw("({$productsAndServices->toSql()}) as u"))
-            ->mergeBindings($productsAndServices->getQuery())
-            ->select('kategori')
-            ->distinct()
-            ->orderBy('kategori')
-            ->pluck('kategori');
 
         if ($search) {
             $semuaProduct->where('nama', 'LIKE', "%{$search}%");
         }
         if ($kategori) {
-            // $semuaProduct->whereRaw('JSON_CONTAINS(kategori, ?)', [$kategori]);
             $semuaProduct->where('kategori', 'LIKE', "%{$kategori}%");
         }
         if ($type) {
@@ -75,12 +69,12 @@ class ProductController extends Controller
         // Product Analysis
         $productAnalysis = Product::select(
             'products.id as id',
+            'products.type as type',
             'products.name as nama_produk',
             'product_variations.price as harga',
             'product_variations.stock as stok',
             'products.sold as terjual',
             'products.review as review',
-            DB::raw('"Product" as type'),
             'products.updated_at as updated_at'
         )
             ->leftJoin('product_variations', 'products.id', '=', 'product_variations.product_id')
@@ -88,14 +82,28 @@ class ProductController extends Controller
 
         $jasaAnalysis = Service::select(
             'id',
+            'type',
             'nama_jasa as nama_produk',
             'harga_jual as harga',
             DB::raw('0 as stok'),
             DB::raw('0 as terjual'),
             DB::raw('0 as review'),
-            DB::raw('"Jasa" as type'),
             'updated_at'
         );
+
+        // Apply filters to productAnalysis
+        if ($search) {
+            $productAnalysis->where('products.name', 'LIKE', "%{$search}%");
+            $jasaAnalysis->where('nama_jasa', 'LIKE', "%{$search}%");
+        }
+        if ($kategori) {
+            $productAnalysis->where('products.full_category_name', 'LIKE', "%{$kategori}%");
+            $jasaAnalysis->where('kategori_jasa', 'LIKE', "%{$kategori}%");
+        }
+        if ($type) {
+            $productAnalysis->where('type', $type);
+            $jasaAnalysis->where('type', $type);
+        }
 
         $productAnalysis = $productAnalysis->unionAll($jasaAnalysis)->orderBy('updated_at', 'desc')->paginate(10);
 
@@ -105,14 +113,9 @@ class ProductController extends Controller
             return $product;
         });
 
-        return view('product.index', [
-            'devices' => $semuaProduct,
-            'productAnalysis' => $productAnalysis,
-            'search' => $search,
-            'kategori' => $kategori,
-            'type' => $type,
-            'kategoriList' => $kategoriList,
-        ]);
+        $kategoriList = $this->gineeOMSService->listCategories();
+
+        return view('product.index', compact('semuaProduct', 'productAnalysis', 'search', 'kategori', 'type', 'kategoriList'));
     }
 
     public function detail($id, Request $request)
@@ -140,11 +143,13 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         if ($request->type === 'Product') {
+            $categories = $this->gineeOMSService->listCategories();
+
             $product = Product::create([
                 'name' => $request->name,
                 'spu' => $request->spu,
-                'full_category_id' => $request->full_category_id,
-                'full_category_name' => $this->getNameById($this->gineeOMSService->listCategories(), $request->full_category_id),
+                'full_category_id' => $this->gineeOMSService->getFullCategoryId($categories, $request->full_category_id),
+                'full_category_name' => $this->gineeOMSService->getFullCategoryName($categories, $request->full_category_id),
                 'brand' => $request->brand,
                 'sale_status' => $request->sale_status,
                 'condition' => $request->condition,
@@ -156,8 +161,8 @@ class ProductController extends Controller
                 'short_description' => $request->short_description,
                 'description' => $request->description,
                 'has_variations' => (bool)$request->has_variations,
-                'variant_options' => $request->variant_options,
-                'images' => $request->images,
+                'variant_options' => $request->has_variations ? $this->getVariantOptions($request) : [],
+                'images' => [],
                 'length' => $request->length,
                 'width' => $request->width,
                 'height' => $request->height,
@@ -181,19 +186,11 @@ class ProductController extends Controller
                 'review' => 0,
             ]);
 
-            if (!$request->has_variations) {
-                $product->productVariations()->create([
-                    'name' => $request->name,
-                    'price' => $request->variations[0]['price'],
-                    'stock' => $request->variations[0]['stock'],
-                    'msku' => $request->variations[0]['msku'],
-                    'barcode' => $request->variations[0]['barcode'],
-                    'combinations' => null,
-                ]);
-            } else {
+            if ($request->has_variations) {
                 foreach ($request->variations as $variation) {
                     $product->productVariations()->create([
                         'name' => $request->name . ' ' . $variation['name'],
+                        'purchase_price' => null,
                         'price' => $variation['price'],
                         'stock' => $variation['stock'],
                         'msku' => $variation['msku'],
@@ -201,6 +198,16 @@ class ProductController extends Controller
                         'combinations' => json_decode($variation['combinations'], true),
                     ]);
                 }
+            } else {
+                $product->productVariations()->create([
+                    'name' => $request->name,
+                    'purchase_price' => null,
+                    'price' => $request->variations[0]['price'],
+                    'stock' => $request->variations[0]['stock'],
+                    'msku' => $request->variations[0]['msku'],
+                    'barcode' => $request->variations[0]['barcode'],
+                    'combinations' => [],
+                ]);
             }
 
             if ($request->hasFile('images')) {
@@ -237,7 +244,7 @@ class ProductController extends Controller
         $categories = $this->gineeOMSService->listCategories();
 
         if ($type === 'Product') {
-            $product = Product::findOrFail($id);
+            $product = Product::with('productVariations')->findOrFail($id);
         } else {
             $product = Service::findOrFail($id);
         }
@@ -249,11 +256,12 @@ class ProductController extends Controller
     {
         if ($request->type === 'Product') {
             $product = Product::findOrFail($id);
+            $categories = $this->gineeOMSService->listCategories();
             $product->update([
                 'name' => $request->name,
                 'spu' => $request->spu,
-                'full_category_id' => $request->full_category_id,
-                'full_category_name' => $this->getNameById($this->gineeOMSService->listCategories(), $request->full_category_id),
+                'full_category_id' => $this->gineeOMSService->getFullCategoryId($categories, $request->full_category_id),
+                'full_category_name' => $this->gineeOMSService->getFullCategoryName($categories, $request->full_category_id),
                 'brand' => $request->brand,
                 'sale_status' => $request->sale_status,
                 'condition' => $request->condition,
@@ -265,7 +273,7 @@ class ProductController extends Controller
                 'short_description' => $request->short_description,
                 'description' => $request->description,
                 'has_variations' => (bool)$request->has_variations,
-                'variant_options' => $request->variant_options,
+                'variant_options' => $request->has_variations ? $this->getVariantOptions($request) : [],
                 'length' => $request->length,
                 'width' => $request->width,
                 'height' => $request->height,
@@ -287,11 +295,13 @@ class ProductController extends Controller
                 'remarks3' => $request->remarks3,
             ]);
 
+            $product->productVariations()->delete();
+
             if ($request->has_variations) {
-                $product->productVariations()->delete();
                 foreach ($request->variations as $variation) {
                     $product->productVariations()->create([
                         'name' => $request->name . ' ' . $variation['name'],
+                        'purchase_price' => null,
                         'price' => $variation['price'],
                         'stock' => $variation['stock'],
                         'msku' => $variation['msku'],
@@ -302,15 +312,21 @@ class ProductController extends Controller
             } else {
                 $product->productVariations()->create([
                     'name' => $request->name,
+                    'purchase_price' => null,
                     'price' => $request->variations[0]['price'],
                     'stock' => $request->variations[0]['stock'],
                     'msku' => $request->variations[0]['msku'],
                     'barcode' => $request->variations[0]['barcode'],
-                    'combinations' => null,
+                    'combinations' => [],
                 ]);
             }
 
             if ($request->hasFile('images')) {
+                if (!empty($product->images)) {
+                    foreach ($product->images as $oldImage) {
+                        Storage::disk('public')->delete($oldImage);
+                    }
+                }
                 $imagePaths = [];
                 foreach ($request->file('images') as $image) {
                     $path = $image->store('product_images', 'public');
@@ -342,10 +358,10 @@ class ProductController extends Controller
     {
         $type = $request->query('type');
 
-        if ($type === 'Jasa') {
-            Service::findOrFail($id)->delete();
-        } else {
+        if ($type === 'Product') {
             Product::findOrFail($id)->delete();
+        } else {
+            Service::findOrFail($id)->delete();
         }
 
         $this->gineeOMSService->deleteMasterProduct([$id]);
@@ -355,19 +371,24 @@ class ProductController extends Controller
             ->with('success', 'Device deleted successfully');
     }
 
-    function getNameById($categories, $id)
+    private function getVariantOptions($request)
     {
-        foreach ($categories as $item) {
-            if ($item['id'] == $id) {
-                return $item['name'];
-            }
-            if (!empty($item['children'])) {
-                $result = $this->getNameById($item['children'], $id);
-                if ($result !== null) {
-                    return $result;
-                }
-            }
+        $variantOptions = [];
+
+        if (!empty($request->variantTypes[0]['name']) && !empty($request->variantTypes[0]['values'])) {
+            $variantOptions[] = [
+                'name' => $request->variantTypes[0]['name'],
+                'values' => explode(',', $request->variantTypes[0]['values']),
+            ];
         }
-        return null;
+
+        if (!empty($request->variantTypes[1]['name']) && !empty($request->variantTypes[1]['values'])) {
+            $variantOptions[] = [
+                'name' => $request->variantTypes[1]['name'],
+                'values' => explode(',', $request->variantTypes[1]['values']),
+            ];
+        }
+
+        return $variantOptions;
     }
 }

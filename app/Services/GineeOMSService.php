@@ -57,30 +57,50 @@ class GineeOMSService
 
     public function createMasterProduct(Request $request): JsonResponse
     {
+        $categories = $this->listCategories();
+
         $data = [
+            'brand' => $request->brand,
+            'type' => 'NORMAL',
             'name' => $request->name,
             'spu' => $request->spu,
-            'fullCategoryId' => $request->full_category_id,
+            'fullCategoryId' => $this->getFullCategoryId($categories, $request->full_category_id),
             'saleStatus' => $request->sale_status,
             'condition' => $request->condition,
+            'minPurchase' => $request->min_purchase,
             'shortDescription' => $request->short_description,
             'description' => $request->description,
+            'extraInfo' => [
+                'hasShelfLife' => (bool)$request->has_shelf_life,
+                'shelfLifePeriod' => $request->shelf_life_duration,
+                'storageRestriction' => $request->inbound_limit,
+                'deliveryRestriction' => $request->outbound_limit,
+                'preOrder' => [
+                    'settingType' => $request->pre_order,
+                    'timeToShip' => $request->preorder_duration,
+                    'timeUnit' => $request->preorder_unit
+                ],
+                'additionInfo' => [
+                    'remark1' => $request->remarks1,
+                    'remark2' => $request->remarks2,
+                    'remark3' => $request->remarks3
+                ]
+            ],
             'images' => $request->images,
             'delivery' => [
                 'length' => $request->length,
+                'lengthUnit' => 'cm',
                 'width' => $request->width,
                 'height' => $request->height,
                 'weight' => $request->weight,
-                'lengthUnit' => 'cm',
                 'weightUnit' => 'g',
-                'declareAmount' => $request->invoice_amount,
-                'declareCurrency' => 'IDR',
-                'declareWeight' => $request->gross_weight,
                 'declareEnName' => $request->customs_english_name,
                 'declareZhName' => $request->customs_chinese_name,
                 'declareHsCode' => $request->hs_code,
+                'declareCurrency' => 'IDR',
+                'declareAmount' => $request->invoice_amount,
+                'declareWeight' => $request->gross_weight,
             ],
-            'type' => 'NORMAL',
             'costInfo' => [
                 'sourceUrl' => $request->source_url,
                 'purchasingTime' => $request->purchase_duration,
@@ -91,67 +111,56 @@ class GineeOMSService
                 ],
             ],
             'status' => 'PENDING_REVIEW',
-            'extraInfo' => [
-                'preOrder' => [
-                    'settingType' => $request->pre_order ? 'PRODUCT_ON' : 'PRODUCT_OFF',
-                    'timeToShip' => $request->preorder_duration,
-                    'timeUnit' => $request->preorder_unit
-                ],
-                'has_shelf_life' => (bool)$request->has_shelf_life,
-                'shelf_life_duration' => $request->shelf_life_duration,
-                'inbound_limit' => $request->inbound_limit,
-                'outbound_limit' => $request->outbound_limit,
-                'additionInfo' => [
-                    'remark1' => $request->remarks1,
-                    'remark2' => $request->remarks2,
-                    'remark3' => $request->remarks3
-                ]
-            ],
-            'minPurchase' => $request->min_purchase,
-            'brand' => $request->brand
         ];
 
         if ($request->has_variations) {
-            $data['variantOptions'] = $request->variant_options;
+            $data['variantOptions'] = [];
+            foreach ($request->variant_options as $option) {
+                $data['variantOptions'][] = [
+                    'name' => $option['name'],
+                    'values' => $option['values'],
+                ];
+            }
             $data['variations'] = [];
             foreach ($request->variations as $variation) {
                 $data['variations'][] = [
-                    'optionValues' => json_decode($variation['combinations'], true),
+                    'optionValues' => $variation['combinations'],
+                    'sku' => $variation['msku'],
+                    'barcode' => $variation['barcode'],
                     'sellingPrice' => [
                         'amount' => $variation['price'],
                         'currencyCode' => 'IDR',
                     ],
-                    'sku' => $variation['msku'],
                     'stock' => [
                         'availableStock' => $variation['stock'],
-                        'safetyAlert' => false,
-                        'safetyStock' => null,
                     ],
-                    'barcode' => $variation['barcode'],
+                    'purchasePrice' => [],
+                    'images' => [],
                 ];
             }
+            
         } else {
+            $data['variantOptions'] = [];
             $data['variations'] = [
                 [
                     'optionValues' => ['-'],
+                    'sku' => $request->variations[0]['msku'],
+                    'barcode' => $request->variations[0]['barcode'],
                     'sellingPrice' => [
                         'amount' => $request->variations[0]['price'],
                         'currencyCode' => 'IDR',
                     ],
-                    'sku' => $request->variations[0]['msku'],
                     'stock' => [
                         'availableStock' => $request->variations[0]['stock'],
-                        'safetyAlert' => false,
-                        'safetyStock' => null,
                     ],
-                    'barcode' => $request->variations[0]['barcode'],
+                    'purchasePrice' => [],
                 ],
             ];
         }
 
         return response()->json([
             'code' => 'SUCCESS',
-            'message' => '成功',
+            'message' => 'OK',
             'data' => [
                 'success' => true,
                 'productId' => 'MP61ED3452E21B840001BBDE33',
@@ -169,31 +178,51 @@ class GineeOMSService
 
     public function updateMasterProduct(string $id, Request $request): JsonResponse
     {
+        $categories = $this->listCategories();
+
         $data = [
             'productId' => $id,
+            'brand' => $request->brand,
+            'type' => 'NORMAL',
             'name' => $request->name,
             'spu' => $request->spu,
-            'fullCategoryId' => $request->full_category_id,
+            'fullCategoryId' => $this->getFullCategoryId($categories, $request->full_category_id),
             'saleStatus' => $request->sale_status,
             'condition' => $request->condition,
+            'minPurchase' => $request->min_purchase,
             'shortDescription' => $request->short_description,
             'description' => $request->description,
+            'extraInfo' => [
+                'hasShelfLife' => (bool)$request->has_shelf_life,
+                'shelfLifePeriod' => $request->shelf_life_duration,
+                'storageRestriction' => $request->inbound_limit,
+                'deliveryRestriction' => $request->outbound_limit,
+                'preOrder' => [
+                    'settingType' => $request->pre_order,
+                    'timeToShip' => $request->preorder_duration,
+                    'timeUnit' => $request->preorder_unit
+                ],
+                'additionInfo' => [
+                    'remark1' => $request->remarks1,
+                    'remark2' => $request->remarks2,
+                    'remark3' => $request->remarks3
+                ]
+            ],
             'images' => $request->images,
             'delivery' => [
                 'length' => $request->length,
+                'lengthUnit' => 'cm',
                 'width' => $request->width,
                 'height' => $request->height,
                 'weight' => $request->weight,
-                'lengthUnit' => 'cm',
                 'weightUnit' => 'g',
-                'declareAmount' => $request->invoice_amount,
-                'declareCurrency' => 'IDR',
-                'declareWeight' => $request->gross_weight,
                 'declareEnName' => $request->customs_english_name,
                 'declareZhName' => $request->customs_chinese_name,
                 'declareHsCode' => $request->hs_code,
+                'declareCurrency' => 'IDR',
+                'declareAmount' => $request->invoice_amount,
+                'declareWeight' => $request->gross_weight,
             ],
-            'type' => 'NORMAL',
             'costInfo' => [
                 'sourceUrl' => $request->source_url,
                 'purchasingTime' => $request->purchase_duration,
@@ -204,67 +233,55 @@ class GineeOMSService
                 ],
             ],
             'status' => 'PENDING_REVIEW',
-            'extraInfo' => [
-                'preOrder' => [
-                    'settingType' => $request->pre_order ? 'PRODUCT_ON' : 'PRODUCT_OFF',
-                    'timeToShip' => $request->preorder_duration,
-                    'timeUnit' => $request->preorder_unit
-                ],
-                'has_shelf_life' => (bool)$request->has_shelf_life,
-                'shelf_life_duration' => $request->shelf_life_duration,
-                'inbound_limit' => $request->inbound_limit,
-                'outbound_limit' => $request->outbound_limit,
-                'additionInfo' => [
-                    'remark1' => $request->remarks1,
-                    'remark2' => $request->remarks2,
-                    'remark3' => $request->remarks3
-                ]
-            ],
-            'minPurchase' => $request->min_purchase,
-            'brand' => $request->brand
         ];
 
         if ($request->has_variations) {
-            $data['variantOptions'] = $request->variant_options;
+            $data['variantOptions'] = [];
+            foreach ($request->variant_options as $option) {
+                $data['variantOptions'][] = [
+                    'name' => $option['name'],
+                    'values' => $option['values'],
+                ];
+            }
             $data['variations'] = [];
             foreach ($request->variations as $variation) {
                 $data['variations'][] = [
-                    'optionValues' => json_decode($variation['combinations'], true),
+                    'optionValues' => $variation['combinations'],
+                    'sku' => $variation['msku'],
+                    'barcode' => $variation['barcode'],
                     'sellingPrice' => [
                         'amount' => $variation['price'],
                         'currencyCode' => 'IDR',
                     ],
-                    'sku' => $variation['msku'],
                     'stock' => [
                         'availableStock' => $variation['stock'],
-                        'safetyAlert' => false,
-                        'safetyStock' => null,
                     ],
-                    'barcode' => $variation['barcode'],
+                    'purchasePrice' => [],
+                    'images' => [],
                 ];
             }
         } else {
+            $data['variantOptions'] = [];
             $data['variations'] = [
                 [
                     'optionValues' => ['-'],
+                    'sku' => $request->variations[0]['msku'],
+                    'barcode' => $request->variations[0]['barcode'],
                     'sellingPrice' => [
                         'amount' => $request->variations[0]['price'],
                         'currencyCode' => 'IDR',
                     ],
-                    'sku' => $request->variations[0]['msku'],
                     'stock' => [
                         'availableStock' => $request->variations[0]['stock'],
-                        'safetyAlert' => false,
-                        'safetyStock' => null,
                     ],
-                    'barcode' => $request->variations[0]['barcode'],
+                    'purchasePrice' => [],
                 ],
             ];
         }
 
         return response()->json([
             'code' => 'SUCCESS',
-            'message' => '成功',
+            'message' => 'OK',
             'data' => [
                 'success' => true,
                 'productId' => 'MP61ED3452E21B840001BBDE33',
@@ -284,7 +301,7 @@ class GineeOMSService
     {
         return response()->json([
             'code' => 'SUCCESS',
-            'message' => '成功',
+            'message' => 'OK',
             'data' => [
                 'taskId' => "D_TASK_DELETE_MASTER_PRODUCT_1485262862233505792",
             ],
@@ -293,5 +310,76 @@ class GineeOMSService
         ]);
 
         // return $this->makeRequest('POST', '/openapi/product/master/v1/batch-delete', $productIds);
+    }
+
+    // function getNameById($categories, $id)
+    // {
+    //     foreach ($categories as $item) {
+    //         if ($item['id'] == $id) {
+    //             return $item['name'];
+    //         }
+    //         if (!empty($item['children'])) {
+    //             $result = $this->getNameById($item['children'], $id);
+    //             if ($result !== null) {
+    //                 return $result;
+    //             }
+    //         }
+    //     }
+    //     return null;
+    // }
+
+    function findCategory($data, $id)
+    {
+        foreach ($data as $item) {
+            if ($item['id'] === $id) {
+                return $item;
+            }
+
+            if (!empty($item['children'])) {
+                $found = $this->findCategory($item['children'], $id);
+                if ($found) {
+                    return $found;
+                }
+            }
+        }
+        return null;
+    }
+
+    function getFullCategoryId($data, $id, &$result = [])
+    {
+        if (empty($id)) {
+            return null;
+        }
+
+        $item = $this->findCategory($data, $id);
+
+        if ($item) {
+            array_unshift($result, $item['id']);
+
+            if (isset($item['parentId']) && $item['parentId'] !== '0') {
+                $this->getFullCategoryId($data, $item['parentId'], $result);
+            }
+        }
+
+        return $result;
+    }
+
+    function getFullCategoryName($data, $id, &$result = [])
+    {
+        if (empty($id)) {
+            return null;
+        }
+
+        $item = $this->findCategory($data, $id);
+
+        if ($item) {
+            array_unshift($result, $item['name']);
+
+            if (isset($item['parentId']) && $item['parentId'] !== '0') {
+                $this->getFullCategoryName($data, $item['parentId'], $result);
+            }
+        }
+
+        return $result;
     }
 }
