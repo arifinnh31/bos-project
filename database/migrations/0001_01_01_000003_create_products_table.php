@@ -22,14 +22,14 @@ return new class extends Migration
             $table->string('brand', 20)->nullable();
             $table->string('sale_status')->default('FOR_SALE')->nullable();
             $table->enum('condition', ['NEW', 'USED'])->default('NEW')->nullable();;
-            $table->boolean('has_shelf_life')->default(false);
+            $table->boolean('has_shelf_life')->default(false)->nullable();
             $table->integer('shelf_life_duration')->nullable();
             $table->integer('inbound_limit')->nullable();
             $table->integer('outbound_limit')->nullable();
-            $table->integer('min_purchase')->default(1);
+            $table->integer('min_purchase')->nullable()->default(1);
             $table->text('short_description')->nullable();
             $table->text('description')->nullable();
-            $table->boolean('has_variations')->default(false);
+            $table->boolean('has_variations')->nullable()->default(false);
             $table->json('variant_options')->nullable();
             $table->json('images')->nullable();
             $table->integer('length')->nullable();
