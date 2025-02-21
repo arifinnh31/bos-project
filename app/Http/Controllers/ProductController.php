@@ -144,6 +144,7 @@ class ProductController extends Controller
         if ($request->type === 'Product') {
             $masterProduct = $this->gineeOMSService->createMasterProduct($request);
             $productId = $masterProduct['data']['productId'];
+            // dd($masterProduct, $productId, $request->all());
             $data = $this->gineeOMSService->getMasterProductDetail($productId);
             $categories = $this->gineeOMSService->listCategories();
 
@@ -243,8 +244,8 @@ class ProductController extends Controller
         if ($request->type === 'Product') {
             $product = Product::findOrFail($id);
             $masterProduct = $this->gineeOMSService->updateMasterProduct($product->ginee_id, $request);
-            $productId = $masterProduct['data']['productId'];
-            $data = $this->gineeOMSService->getMasterProductDetail($productId);
+            // dd($masterProduct);
+            $data = $this->gineeOMSService->getMasterProductDetail($product->ginee_id);
             $categories = $this->gineeOMSService->listCategories();
 
             $product->update(

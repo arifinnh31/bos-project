@@ -119,15 +119,17 @@ class GineeOMSService
         ];
 
         // handle images
-        // foreach ($request->images as $image) {
-        //     $response = $this->uploadImage($image);
-        //     $data['images'][] = $response['data']['imageUrl'];
-        // }
+        if ($request->hasFile('images')) {
+            foreach ($request->images as $image) {
+                $response = $this->uploadImage($image);
+                $data['images'][] = $response['data']['imageUrl'];
+            }
+        }
 
-        $data['images'] = [
-            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
-            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
-        ];
+        // $data['images'] = [
+        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
+        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
+        // ];
 
         // handle variations
         foreach ($request->variations as $variation) {
@@ -156,7 +158,7 @@ class GineeOMSService
         $categories = $this->listCategories();
 
         $data = [
-            'productId' => $id,
+            'id' => $id,
             'brand' => $request->brand,
             'type' => 'NORMAL',
             'name' => $request->name,
@@ -219,10 +221,10 @@ class GineeOMSService
         //     $data['images'][] = $response['data']['imageUrl'];
         // }
 
-        $data['images'] = [
-            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
-            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
-        ];
+        // $data['images'] = [
+        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
+        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
+        // ];
 
         // handle variations
         foreach ($request->variations as $variation) {
@@ -242,13 +244,15 @@ class GineeOMSService
             ];
         }
 
+        // dd(json_encode($data));
+
         // dd($data, $this->makeRequest('POST', '/openapi/product/master/v1/update', $data));
         return $this->makeRequest('POST', '/openapi/product/master/v1/update', $data);
     }
 
     public function deleteMasterProduct(array $productIds)
     {
-        // return $this->makeRequest('POST', '/openapi/product/master/v1/batch-delete', $productIds);
+        return $this->makeRequest('POST', '/openapi/product/master/v1/batch-delete', ['productIds' => $productIds]);
     }
 
     public function uploadImage($image): array
