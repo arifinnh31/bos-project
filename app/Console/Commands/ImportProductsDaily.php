@@ -47,7 +47,7 @@ class ImportProductsDaily extends Command
                     'min_purchase' => $data['minPurchase'],
                     'short_description' => $data['shortDescription'],
                     'description' => $data['description'],
-                    'variantOptions' => $data['variantOptions'],
+                    'variant_options' => $data['variantOptions'],
                     'has_variations' => !empty($data['variantOptions']),
                     'images' => $data['images'],
                     'length' => $data['delivery']['length'],

@@ -2,10 +2,8 @@
 
 namespace App\Services;
 
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
-use PhpParser\Node\Expr\Cast\Double;
 use stdClass;
 
 class GineeOMSService
@@ -126,10 +124,10 @@ class GineeOMSService
             }
         }
 
-        // $data['images'] = [
-        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
-        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
-        // ];
+        $data['images'] = [
+            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
+            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
+        ];
 
         // handle variations
         foreach ($request->variations as $variation) {
@@ -149,7 +147,6 @@ class GineeOMSService
             ];
         }
 
-        // dd($data, $this->makeRequest('POST', '/openapi/product/master/v1/create', $data));
         return $this->makeRequest('POST', '/openapi/product/master/v1/create', $data);
     }
 
@@ -216,15 +213,15 @@ class GineeOMSService
         ];
 
         // handle images
-        // foreach ($request->images as $image) {
-        //     $response = $this->uploadImage($image);
-        //     $data['images'][] = $response['data']['imageUrl'];
-        // }
+        foreach ($request->images as $image) {
+            $response = $this->uploadImage($image);
+            $data['images'][] = $response['data']['imageUrl'];
+        }
 
-        // $data['images'] = [
-        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
-        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
-        // ];
+        $data['images'] = [
+            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
+            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
+        ];
 
         // handle variations
         foreach ($request->variations as $variation) {
@@ -243,8 +240,6 @@ class GineeOMSService
                 'images' =>  $data['images'],
             ];
         }
-
-        // dd(json_encode($data));
 
         // dd($data, $this->makeRequest('POST', '/openapi/product/master/v1/update', $data));
         return $this->makeRequest('POST', '/openapi/product/master/v1/update', $data);
