@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->string('name');
-            $table->decimal('purchase_price', 12, 2)->nullable();
+            $table->decimal('purchase_price', 12, 2)->default(null)->nullable();
             $table->decimal('price', 12, 2)->nullable();
             $table->integer('stock');
             $table->string('msku');

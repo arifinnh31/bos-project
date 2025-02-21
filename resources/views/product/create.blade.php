@@ -139,14 +139,14 @@
                             <div class="form-group">
                                 <label for="inbound-limit">Inbound Limit</label>
                                 <input type="number" id="inbound-limit" name="inbound_limit" class="form-control"
-                                    placeholder="Please Enter">
+                                    placeholder="Please Enter" min="0.01" max="0.99" step="0.01">
                             </div>
                         </div>
                         <div class="col-md-2" id="custom-shelf-life" style="display: none;">
                             <div class="form-group">
                                 <label for="outbound-limit">Outbound Limit</label>
                                 <input type="number" id="outbound-limit" name="outbound_limit" class="form-control"
-                                    placeholder="Please Enter">
+                                    placeholder="Please Enter" min="0.01" max="0.99" step="0.01">
                             </div>
                         </div>
                     </div>
@@ -175,11 +175,10 @@
                             <div class="form-group">
                                 <label for="long-description">Long description</label>
                                 <textarea id="long-description" class="form-control" name='description'
-                                    placeholder="Type your description here and apply it to your product" maxlength="7000">{{ '<p></p>' }}</textarea>
+                                    placeholder="Type your description here and apply it to your product" maxlength="7000"></textarea>
                             </div>
                         </div>
                     </div>
-
 
                     <!-- Product Information -->
                     <h4 style="font-weight: bold;">Product Information</h4>
@@ -613,7 +612,7 @@
                     tagsContainer.appendChild(tagElement);
                 });
                 hiddenInput.value = tags.join(',');
-                generateVariationRows(); // Regenerate rows when tags change
+                generateVariationRows();
             }
 
             tagInput.addEventListener('keydown', function(e) {

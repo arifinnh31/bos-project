@@ -5,6 +5,8 @@ namespace App\Services;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
+use PhpParser\Node\Expr\Cast\Double;
+use stdClass;
 
 class GineeOMSService
 {
@@ -55,7 +57,7 @@ class GineeOMSService
         return $this->makeRequest('POST', '/openapi/product/master/v1/list', ['page' => $page, 'size' => $size])['data'];
     }
 
-    public function createMasterProduct(Request $request): JsonResponse
+    public function createMasterProduct(Request $request): array
     {
         $categories = $this->listCategories();
 
@@ -67,17 +69,17 @@ class GineeOMSService
             'fullCategoryId' => $this->getFullCategoryId($categories, $request->full_category_id),
             'saleStatus' => $request->sale_status,
             'condition' => $request->condition,
-            'minPurchase' => $request->min_purchase,
+            'minPurchase' => (int)$request->min_purchase,
             'shortDescription' => $request->short_description,
             'description' => $request->description,
             'extraInfo' => [
                 'hasShelfLife' => (bool)$request->has_shelf_life,
-                'shelfLifePeriod' => $request->shelf_life_duration,
-                'storageRestriction' => $request->inbound_limit,
-                'deliveryRestriction' => $request->outbound_limit,
+                'shelfLifePeriod' => $request->shelf_life_duration ? (int)$request->shelf_life_duration : null,
+                'storageRestriction' => $request->inbound_limit ? ((float)$request->inbound_limit < 1 ? (float)$request->inbound_limit : 0.99) : null,
+                'deliveryRestriction' => $request->outbound_limit ? ((float)$request->outbound_limit < 1 ? (float)$request->outbound_limit : 0.99) : null,
                 'preOrder' => [
-                    'settingType' => $request->pre_order,
-                    'timeToShip' => $request->preorder_duration,
+                    'settingType' => $request->preorder,
+                    'timeToShip' => $request->preorder_duration ? (int)$request->preorder_duration : null,
                     'timeUnit' => $request->preorder_unit
                 ],
                 'additionInfo' => [
@@ -86,97 +88,70 @@ class GineeOMSService
                     'remark3' => $request->remarks3
                 ]
             ],
-            'images' => $request->images,
+            'variantOptions' => $this->getVariantOptions($request),
+            'variations' => [],
+            'images' => [],
             'delivery' => [
-                'length' => $request->length,
+                'length' => $request->length ? (int)$request->length : 1,
                 'lengthUnit' => 'cm',
-                'width' => $request->width,
-                'height' => $request->height,
+                'width' => $request->width ? (int)$request->width : 1,
+                'height' => $request->height ? (int)$request->height : 1,
                 'weight' => $request->weight,
                 'weightUnit' => 'g',
                 'declareEnName' => $request->customs_english_name,
                 'declareZhName' => $request->customs_chinese_name,
                 'declareHsCode' => $request->hs_code,
                 'declareCurrency' => 'IDR',
-                'declareAmount' => $request->invoice_amount,
-                'declareWeight' => $request->gross_weight,
+                'declareAmount' => $request->invoice_amount ? (int)$request->invoice_amount : null,
+                'declareWeight' => $request->gross_weight ? (int)$request->gross_weight : null,
+                'customsWeight' => null,
             ],
             'costInfo' => [
                 'sourceUrl' => $request->source_url,
-                'purchasingTime' => $request->purchase_duration,
+                'purchasingTime' => (int)$request->purchase_duration,
                 'purchasingTimeUnit' => $request->purchase_unit,
                 'salesTax' => [
-                    'amount' => $request->sales_tax_amount,
+                    'amount' => (int)$request->sales_tax_amount,
                     'currencyCode' => 'IDR',
                 ],
             ],
             'status' => 'PENDING_REVIEW',
         ];
 
-        if ($request->has_variations) {
-            $data['variantOptions'] = [];
-            foreach ($request->variant_options as $option) {
-                $data['variantOptions'][] = [
-                    'name' => $option['name'],
-                    'values' => $option['values'],
-                ];
-            }
-            $data['variations'] = [];
-            foreach ($request->variations as $variation) {
-                $data['variations'][] = [
-                    'optionValues' => $variation['combinations'],
-                    'sku' => $variation['msku'],
-                    'barcode' => $variation['barcode'],
-                    'sellingPrice' => [
-                        'amount' => $variation['price'],
-                        'currencyCode' => 'IDR',
-                    ],
-                    'stock' => [
-                        'availableStock' => $variation['stock'],
-                    ],
-                    'purchasePrice' => [],
-                    'images' => [],
-                ];
-            }
-            
-        } else {
-            $data['variantOptions'] = [];
-            $data['variations'] = [
-                [
-                    'optionValues' => ['-'],
-                    'sku' => $request->variations[0]['msku'],
-                    'barcode' => $request->variations[0]['barcode'],
-                    'sellingPrice' => [
-                        'amount' => $request->variations[0]['price'],
-                        'currencyCode' => 'IDR',
-                    ],
-                    'stock' => [
-                        'availableStock' => $request->variations[0]['stock'],
-                    ],
-                    'purchasePrice' => [],
+        // handle images
+        // foreach ($request->images as $image) {
+        //     $response = $this->uploadImage($image);
+        //     $data['images'][] = $response['data']['imageUrl'];
+        // }
+
+        $data['images'] = [
+            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
+            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
+        ];
+
+        // handle variations
+        foreach ($request->variations as $variation) {
+            $data['variations'][] = [
+                'optionValues' => json_decode($variation['combinations']),
+                'sku' => $variation['msku'],
+                'barcode' => $variation['barcode'],
+                'sellingPrice' => [
+                    'amount' => (int)$variation['price'],
+                    'currencyCode' => 'IDR',
                 ],
+                'stock' => [
+                    'availableStock' => (int)$variation['stock'],
+                ],
+                'purchasePrice' => new stdClass(),
+                'images' =>  $data['images'],
             ];
         }
 
-        return response()->json([
-            'code' => 'SUCCESS',
-            'message' => 'OK',
-            'data' => [
-                'success' => true,
-                'productId' => 'MP61ED3452E21B840001BBDE33',
-                'variationIds' => [
-                    'MV61ED3452E21B840001BBDE34'
-                ],
-                'invalidFields' => null
-            ],
-            'extra' => null,
-            'pricingStrategy' => 'PAY'
-        ]);
-
-        // return $this->makeRequest('POST', '/openapi/product/master/v1/create', $data);
+        // dd($data, $this->makeRequest('POST', '/openapi/product/master/v1/create', $data));
+        return $this->makeRequest('POST', '/openapi/product/master/v1/create', $data);
     }
 
-    public function updateMasterProduct(string $id, Request $request): JsonResponse
+    public function updateMasterProduct(string $id, Request $request): array
     {
         $categories = $this->listCategories();
 
@@ -189,17 +164,17 @@ class GineeOMSService
             'fullCategoryId' => $this->getFullCategoryId($categories, $request->full_category_id),
             'saleStatus' => $request->sale_status,
             'condition' => $request->condition,
-            'minPurchase' => $request->min_purchase,
+            'minPurchase' => (int)$request->min_purchase,
             'shortDescription' => $request->short_description,
             'description' => $request->description,
             'extraInfo' => [
                 'hasShelfLife' => (bool)$request->has_shelf_life,
-                'shelfLifePeriod' => $request->shelf_life_duration,
-                'storageRestriction' => $request->inbound_limit,
-                'deliveryRestriction' => $request->outbound_limit,
+                'shelfLifePeriod' => $request->shelf_life_duration ? (int)$request->shelf_life_duration : null,
+                'storageRestriction' => $request->inbound_limit ? ((float)$request->inbound_limit < 1 ? (float)$request->inbound_limit : 0.99) : null,
+                'deliveryRestriction' => $request->outbound_limit ? ((float)$request->outbound_limit < 1 ? (float)$request->outbound_limit : 0.99) : null,
                 'preOrder' => [
-                    'settingType' => $request->pre_order,
-                    'timeToShip' => $request->preorder_duration,
+                    'settingType' => $request->preorder,
+                    'timeToShip' => $request->preorder_duration ? (int)$request->preorder_duration : null,
                     'timeUnit' => $request->preorder_unit
                 ],
                 'additionInfo' => [
@@ -208,127 +183,100 @@ class GineeOMSService
                     'remark3' => $request->remarks3
                 ]
             ],
-            'images' => $request->images,
+            'variantOptions' => $this->getVariantOptions($request),
+            'variations' => [],
+            'images' => [],
             'delivery' => [
-                'length' => $request->length,
+                'length' => $request->length ? (int)$request->length : 1,
                 'lengthUnit' => 'cm',
-                'width' => $request->width,
-                'height' => $request->height,
+                'width' => $request->width ? (int)$request->width : 1,
+                'height' => $request->height ? (int)$request->height : 1,
                 'weight' => $request->weight,
                 'weightUnit' => 'g',
                 'declareEnName' => $request->customs_english_name,
                 'declareZhName' => $request->customs_chinese_name,
                 'declareHsCode' => $request->hs_code,
                 'declareCurrency' => 'IDR',
-                'declareAmount' => $request->invoice_amount,
-                'declareWeight' => $request->gross_weight,
+                'declareAmount' => $request->invoice_amount ? (int)$request->invoice_amount : null,
+                'declareWeight' => $request->gross_weight ? (int)$request->gross_weight : null,
+                'customsWeight' => null,
             ],
             'costInfo' => [
                 'sourceUrl' => $request->source_url,
-                'purchasingTime' => $request->purchase_duration,
+                'purchasingTime' => (int)$request->purchase_duration,
                 'purchasingTimeUnit' => $request->purchase_unit,
                 'salesTax' => [
-                    'amount' => $request->sales_tax_amount,
+                    'amount' => (int)$request->sales_tax_amount,
                     'currencyCode' => 'IDR',
                 ],
             ],
             'status' => 'PENDING_REVIEW',
         ];
 
-        if ($request->has_variations) {
-            $data['variantOptions'] = [];
-            foreach ($request->variant_options as $option) {
-                $data['variantOptions'][] = [
-                    'name' => $option['name'],
-                    'values' => $option['values'],
-                ];
-            }
-            $data['variations'] = [];
-            foreach ($request->variations as $variation) {
-                $data['variations'][] = [
-                    'optionValues' => $variation['combinations'],
-                    'sku' => $variation['msku'],
-                    'barcode' => $variation['barcode'],
-                    'sellingPrice' => [
-                        'amount' => $variation['price'],
-                        'currencyCode' => 'IDR',
-                    ],
-                    'stock' => [
-                        'availableStock' => $variation['stock'],
-                    ],
-                    'purchasePrice' => [],
-                    'images' => [],
-                ];
-            }
-        } else {
-            $data['variantOptions'] = [];
-            $data['variations'] = [
-                [
-                    'optionValues' => ['-'],
-                    'sku' => $request->variations[0]['msku'],
-                    'barcode' => $request->variations[0]['barcode'],
-                    'sellingPrice' => [
-                        'amount' => $request->variations[0]['price'],
-                        'currencyCode' => 'IDR',
-                    ],
-                    'stock' => [
-                        'availableStock' => $request->variations[0]['stock'],
-                    ],
-                    'purchasePrice' => [],
+        // handle images
+        // foreach ($request->images as $image) {
+        //     $response = $this->uploadImage($image);
+        //     $data['images'][] = $response['data']['imageUrl'];
+        // }
+
+        $data['images'] = [
+            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
+            "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
+        ];
+
+        // handle variations
+        foreach ($request->variations as $variation) {
+            $data['variations'][] = [
+                'optionValues' => json_decode($variation['combinations']),
+                'sku' => $variation['msku'],
+                'barcode' => $variation['barcode'],
+                'sellingPrice' => [
+                    'amount' => (int)$variation['price'],
+                    'currencyCode' => 'IDR',
                 ],
+                'stock' => [
+                    'availableStock' => (int)$variation['stock'],
+                ],
+                'purchasePrice' => new stdClass(),
+                'images' =>  $data['images'],
             ];
         }
 
-        return response()->json([
-            'code' => 'SUCCESS',
-            'message' => 'OK',
-            'data' => [
-                'success' => true,
-                'productId' => 'MP61ED3452E21B840001BBDE33',
-                'variationIds' => [
-                    'MV61ED3452E21B840001BBDE34'
-                ],
-                'invalidFields' => null
-            ],
-            'extra' => null,
-            'pricingStrategy' => 'PAY'
-        ]);
-
-        // return $this->makeRequest('POST', '/openapi/product/master/v1/update', $data);
+        // dd($data, $this->makeRequest('POST', '/openapi/product/master/v1/update', $data));
+        return $this->makeRequest('POST', '/openapi/product/master/v1/update', $data);
     }
 
-    public function deleteMasterProduct(array $productIds): JsonResponse
+    public function deleteMasterProduct(array $productIds)
     {
-        return response()->json([
-            'code' => 'SUCCESS',
-            'message' => 'OK',
-            'data' => [
-                'taskId' => "D_TASK_DELETE_MASTER_PRODUCT_1485262862233505792",
-            ],
-            'extra' => null,
-            'pricingStrategy' => 'PAY'
-        ]);
-
         // return $this->makeRequest('POST', '/openapi/product/master/v1/batch-delete', $productIds);
     }
 
-    // function getNameById($categories, $id)
-    // {
-    //     foreach ($categories as $item) {
-    //         if ($item['id'] == $id) {
-    //             return $item['name'];
-    //         }
-    //         if (!empty($item['children'])) {
-    //             $result = $this->getNameById($item['children'], $id);
-    //             if ($result !== null) {
-    //                 return $result;
-    //             }
-    //         }
-    //     }
-    //     return null;
-    // }
+    public function uploadImage($image): array
+    {
+        $authorization = $this->generateAuthorization('POST', '/openapi/common/v1/image/upload');
 
-    function findCategory($data, $id)
+        $headers = [
+            'X-Advai-Country' => 'ID',
+            'Authorization' => $authorization,
+        ];
+
+        $response = Http::withHeaders($headers)
+            ->attach('image', file_get_contents($image), $image->getClientOriginalName())
+            ->post($this->requestHost . '/openapi/common/v1/image/upload');
+
+        return $response->json();
+    }
+
+    public function getImage(string $imageId): array
+    {
+        return $this->makeRequest('GET', '/openapi/common/v1/image/get', ['imageId' => $imageId])['data'];
+    }
+
+    /*
+     * UTILITY METHODS
+     */
+
+    public function findCategory($data, $id)
     {
         foreach ($data as $item) {
             if ($item['id'] === $id) {
@@ -345,7 +293,7 @@ class GineeOMSService
         return null;
     }
 
-    function getFullCategoryId($data, $id, &$result = [])
+    public function getFullCategoryId($data, $id, &$result = [])
     {
         if (empty($id)) {
             return null;
@@ -364,7 +312,7 @@ class GineeOMSService
         return $result;
     }
 
-    function getFullCategoryName($data, $id, &$result = [])
+    public function getFullCategoryName($data, $id, &$result = [])
     {
         if (empty($id)) {
             return null;
@@ -381,5 +329,42 @@ class GineeOMSService
         }
 
         return $result;
+    }
+
+    public function getVariantOptions(Request $request): array
+    {
+        $variantOptions = [];
+
+        if (!empty($request->variantTypes[0]['name']) && !empty($request->variantTypes[0]['values'])) {
+            $variantOptions[] = [
+                'name' => $request->variantTypes[0]['name'],
+                'values' => explode(',', $request->variantTypes[0]['values']),
+            ];
+        }
+
+        if (!empty($request->variantTypes[1]['name']) && !empty($request->variantTypes[1]['values'])) {
+            $variantOptions[] = [
+                'name' => $request->variantTypes[1]['name'],
+                'values' => explode(',', $request->variantTypes[1]['values']),
+            ];
+        }
+
+        return $variantOptions;
+    }
+
+    public function getNameById($categories, $id)
+    {
+        foreach ($categories as $item) {
+            if ($item['id'] == $id) {
+                return $item['name'];
+            }
+            if (!empty($item['children'])) {
+                $result = $this->getNameById($item['children'], $id);
+                if ($result !== null) {
+                    return $result;
+                }
+            }
+        }
+        return null;
     }
 }

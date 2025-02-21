@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Product;
 use App\Services\GineeOMSService;
+use Illuminate\Support\Facades\Log;
 
 class ImportProductsDaily extends Command
 {
@@ -14,18 +15,19 @@ class ImportProductsDaily extends Command
     public function handle()
     {
         $this->info('Importing products...');
-        $gineOMSService = new GineeOMSService();
-        $categories = $gineOMSService->listCategories();
-        $totalProducts = $gineOMSService->listMasterProducts()['total'];
+        $gineeOMSService = new GineeOMSService();
+        $categories = $gineeOMSService->listCategories();
+        $totalProducts = $gineeOMSService->listMasterProducts()['total'];
 
         if ($totalProducts === 0) {
             $this->info('No products found to import.');
             return;
         }
 
-        for ($i = 0; $i < $totalProducts; $i++) {
-            $productId = $gineOMSService->listMasterProducts($i)['content'][0]['productId'];
-            $data = $gineOMSService->getMasterProductDetail($productId);
+        for ($i = 0; $i < 10; $i++) {
+            $masterProduct = $gineeOMSService->listMasterProducts($i);
+            $productId = $masterProduct['content'][0]['productId'];
+            $data = $gineeOMSService->getMasterProductDetail($productId);
 
             $product = Product::updateOrCreate(
                 ['ginee_id' => $data['productId']],
@@ -34,7 +36,7 @@ class ImportProductsDaily extends Command
                     'name' => $data['name'],
                     'spu' => $data['spu'],
                     'full_category_id' => $data['fullCategoryId'],
-                    'full_category_name' => $gineOMSService->getFullCategoryName($categories, end($data['fullCategoryId'])),
+                    'full_category_name' => $gineeOMSService->getFullCategoryName($categories, end($data['fullCategoryId'])),
                     'brand' => $data['brand'],
                     'sale_status' => $data['saleStatus'],
                     'condition' => $data['genieProductCondition'],
@@ -45,6 +47,8 @@ class ImportProductsDaily extends Command
                     'min_purchase' => $data['minPurchase'],
                     'short_description' => $data['shortDescription'],
                     'description' => $data['description'],
+                    'variantOptions' => $data['variantOptions'],
+                    'has_variations' => !empty($data['variantOptions']),
                     'images' => $data['images'],
                     'length' => $data['delivery']['length'],
                     'width' => $data['delivery']['width'],
@@ -72,21 +76,20 @@ class ImportProductsDaily extends Command
                 ]
             );
 
-            if (!empty($data['variations'])) {
-                foreach ($data['variations'] as $variation) {
-                    $product->productVariations()->updateOrCreate(
-                        ['ginee_id' => $variation['id']],
-                        [
-                            'name' => $variation['productName'],
-                            'purchase_price' => null,
-                            'price' => $variation['sellingPrice']['amount'],
-                            'stock' => $variation['stock']['availableStock'],
-                            'msku' => $variation['sku'],
-                            'barcode' => $variation['barcode'],
-                            'combinations' => $variation['optionValues'],
-                        ]
-                    );
-                }
+            foreach ($data['variations'] as $variation) {
+                $product->productVariations()->updateOrCreate(
+                    ['ginee_id' => $variation['id']],
+                    [
+                        'ginee_id' => $variation['id'],
+                        'name' => $variation['productName'],
+                        'purchase_price' => $variation['purchasePrice'],
+                        'price' => $variation['sellingPrice']['amount'],
+                        'stock' => $variation['stock']['availableStock'],
+                        'msku' => $variation['sku'],
+                        'barcode' => $variation['barcode'],
+                        'combinations' => $variation['optionValues'],
+                    ]
+                );
             }
         }
 
