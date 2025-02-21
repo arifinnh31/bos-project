@@ -50,7 +50,7 @@ class GineeOMSService
         return $this->makeRequest('GET', '/openapi/product/master/v1/get', ['productId' => $productId])['data'];
     }
 
-    public function listMasterProducts(int $page = 0, int $size = 1): array
+    public function listMasterProducts(int $page = 0, int $size = 200): array
     {
         return $this->makeRequest('POST', '/openapi/product/master/v1/list', ['page' => $page, 'size' => $size])['data'];
     }
