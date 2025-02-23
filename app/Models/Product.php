@@ -15,6 +15,7 @@ class Product extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'is_ginee',
         'ginee_id',
         'name',
         'spu',

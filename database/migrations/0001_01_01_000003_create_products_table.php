@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->string('id')->primary();
+            $table->boolean('is_ginee')->default(false)->nullable();
             $table->string('ginee_id')->nullable();
             $table->string('type', 7)->default('Product')->nullable();
             $table->string('name', 300);
@@ -24,17 +25,17 @@ return new class extends Migration
             $table->enum('condition', ['NEW', 'USED'])->default('NEW')->nullable();;
             $table->boolean('has_shelf_life')->default(false)->nullable();
             $table->integer('shelf_life_duration')->nullable();
-            $table->integer('inbound_limit')->nullable();
-            $table->integer('outbound_limit')->nullable();
+            $table->decimal('inbound_limit', 4, 2)->nullable();
+            $table->decimal('outbound_limit', 4, 2)->nullable();
             $table->integer('min_purchase')->nullable()->default(1);
             $table->text('short_description')->nullable();
             $table->text('description')->nullable();
-            $table->boolean('has_variations')->nullable()->default(false);
+            $table->boolean('has_variations')->default(false)->nullable();
             $table->json('variant_options')->nullable();
             $table->json('images')->nullable();
-            $table->integer('length')->nullable();
-            $table->integer('width')->nullable();
-            $table->integer('height')->nullable();
+            $table->integer('length')->default(1)->nullable();
+            $table->integer('width')->default(1)->nullable();
+            $table->integer('height')->default(1)->nullable();
             $table->integer('weight')->nullable();
             $table->string('preorder')->default('PRODUCT_OFF')->nullable();
             $table->integer('preorder_duration')->nullable();

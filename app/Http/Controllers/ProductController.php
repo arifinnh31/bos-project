@@ -8,6 +8,7 @@ use App\Services\GineeOMSService;
 use App\Services\TokopediaScraperService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -112,7 +113,7 @@ class ProductController extends Controller
             return $product;
         });
 
-        $kategoriList = $this->gineeOMSService->listCategories();
+        $kategoriList = $this->getCategories();
 
         return view('product.index', compact('semuaProduct', 'productAnalysis', 'search', 'kategori', 'type', 'kategoriList'));
     }
@@ -134,7 +135,7 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = $this->gineeOMSService->listCategories();
+        $categories = $this->getCategories();
 
         return view('product.create', compact('categories'));
     }
@@ -142,71 +143,86 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         if ($request->type === 'Product') {
-            $masterProduct = $this->gineeOMSService->createMasterProduct($request);
-            $productId = $masterProduct['data']['productId'];
-            // dd($masterProduct, $productId, $request->all());
-            $data = $this->gineeOMSService->getMasterProductDetail($productId);
-            $categories = $this->gineeOMSService->listCategories();
+            $categories = $this->getCategories();
+            // dd($request->all());
 
-            $product = Product::create(
-                [
-                    'ginee_id' => $data['productId'],
-                    'name' => $data['name'],
-                    'spu' => $data['spu'],
-                    'full_category_id' => $data['fullCategoryId'],
-                    'full_category_name' => $this->gineeOMSService->getFullCategoryName($categories, end($data['fullCategoryId'])),
-                    'brand' => $data['brand'],
-                    'sale_status' => $data['saleStatus'],
-                    'condition' => $data['genieProductCondition'],
-                    'has_shelf_life' => $data['extraInfo']['hasShelfLife'],
-                    'shelf_life_duration' => $data['extraInfo']['shelfLifePeriod'],
-                    'inbound_limit' => $data['extraInfo']['storageRestriction'],
-                    'outbound_limit' => $data['extraInfo']['deliveryRestriction'],
-                    'min_purchase' => $data['minPurchase'],
-                    'short_description' => $data['shortDescription'],
-                    'description' => $data['description'],
-                    'variant_options' => $data['variantOptions'],
-                    'has_variations' => !empty($data['variantOptions']),
-                    'images' => $data['images'],
-                    'length' => $data['delivery']['length'],
-                    'width' => $data['delivery']['width'],
-                    'height' => $data['delivery']['height'],
-                    'weight' => $data['delivery']['weight'],
-                    'preorder' => $data['extraInfo']['preOrder']['settingType'],
-                    'preorder_duration' => $data['extraInfo']['preOrder']['timeToShip'],
-                    'preorder_unit' => $data['extraInfo']['preOrder']['timeUnit'],
-                    'customs_chinese_name' => $data['delivery']['declareZhName'],
-                    'customs_english_name' => $data['delivery']['declareEnName'],
-                    'hs_code' => $data['delivery']['declareHsCode'],
-                    'invoice_amount' => $data['delivery']['declareAmount'],
-                    'gross_weight' => $data['delivery']['declareWeight'],
-                    'source_url' => $data['costInfo']['sourceUrl'],
-                    'purchase_duration' => $data['costInfo']['purchasingTime'],
-                    'purchase_unit' => $data['costInfo']['purchasingTimeUnit'],
-                    'sales_tax_amount' => $data['costInfo']['salesTax']['amount'],
-                    'remarks1' => $data['extraInfo']['additionInfo']['remark1'],
-                    'remarks2' => $data['extraInfo']['additionInfo']['remark2'],
-                    'remarks3' => $data['extraInfo']['additionInfo']['remark3'],
-                    'sold' => 0,
-                    'review' => 0,
-                    'created_at' => $data['createDatetime'],
-                    'updated_at' => $data['updateDatetime'],
-                ]
-            );
+            // handle product
+            $product = Product::create([
+                'name' => $request->name,
+                'is_ginee' => $request->is_ginee ? 1 : 0,
+                'spu' => $request->spu,
+                'full_category_id' => $this->getFullCategoryId($categories, $request->full_category_id),
+                'full_category_name' => $this->getFullCategoryName($categories, $request->full_category_id),
+                'brand' => $request->brand,
+                'sale_status' => $request->sale_status,
+                'condition' => $request->condition,
+                'has_shelf_life' => (bool)$request->has_shelf_life,
+                'shelf_life_duration' => $request->shelf_life_duration ? (int)$request->shelf_life_duration : null,
+                'inbound_limit' => $request->inbound_limit ? ((float)$request->inbound_limit < 1 ? (float)$request->inbound_limit : 0.99) : null,
+                'outbound_limit' => $request->outbound_limit ? ((float)$request->outbound_limit < 1 ? (float)$request->outbound_limit : 0.99) : null,
+                'min_purchase' => (int)$request->min_purchase,
+                'short_description' => $request->short_description,
+                'description' => $request->description,
+                'has_variations' => $request->has_variations ? 1 : 0,
+                'variant_options' => $this->getVariantOptions($request),
+                'length' => $request->length ? (int)$request->length : 1,
+                'width' => $request->width ? (int)$request->width : 1,
+                'height' => $request->height ? (int)$request->height : 1,
+                'weight' => $request->weight,
+                'preorder' => $request->preorder,
+                'preorder_duration' => $request->preorder_duration ? (int)$request->preorder_duration : null,
+                'preorder_unit' => $request->preorder_unit,
+                'customs_chinese_name' => $request->customs_chinese_name,
+                'customs_english_name' => $request->customs_english_name,
+                'hs_code' => $request->hs_code,
+                'invoice_amount' => $request->invoice_amount ? (int)$request->invoice_amount : null,
+                'gross_weight' => $request->gross_weight ? (int)$request->gross_weight : null,
+                'source_url' => $request->source_url,
+                'purchase_duration' => $request->purchase_duration ? (int)$request->purchase_duration : null,
+                'purchase_unit' => $request->purchase_unit,
+                'sales_tax_amount' => $request->sales_tax_amount ? (int)$request->sales_tax_amount : null,
+                'remarks1' => $request->remarks1,
+                'remarks2' => $request->remarks2,
+                'remarks3' => $request->remarks3,
+                'sold' => 0,
+                'review' => 0,
+            ]);
 
-            foreach ($data['variations'] as $variation) {
-                $product->productVariations()->create(
-                    [
-                        'ginee_id' => $variation['id'],
-                        'name' => $variation['productName'],
-                        'purchase_price' => $variation['purchasePrice'],
-                        'price' => $variation['sellingPrice']['amount'],
-                        'stock' => $variation['stock']['availableStock'],
-                        'msku' => $variation['sku'],
-                        'barcode' => $variation['barcode'],
-                        'combinations' => $variation['optionValues'],
-                    ]
-                );
+            // handle variations
+            foreach ($request->variations as $variation) {
+                $product->productVariations()->create([
+                    'ginee_id' => null,
+                    'name' => $request->name,
+                    'purchase_price' => null,
+                    'price' => $variation['price'] ?? 1,
+                    'stock' => $variation['stock'],
+                    'msku' => $variation['msku'],
+                    'barcode' => $variation['barcode'],
+                    'combinations' => json_decode($variation['combinations'], true),
+                ]);
+            }
+
+            // handle image
+            $imagePaths = [];
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('product_images', 'public');
+                    $imagePaths[] = $path;
+                }
+            }
+            $product->update(['images' => $imagePaths]);
+
+            // handle ginee
+            if ($request->is_ginee) {
+                $masterProduct = $this->gineeOMSService->createMasterProduct($product);
+                // update product ginee_id
+                $productId = $masterProduct['data']['productId'];
+                $product->update(['ginee_id' => $productId]);
+                // update variations ginee_id
+                $variationIds = $masterProduct['data']['variationIds'];
+                foreach ($product->productVariations as $index => $variation) {
+                    $variation->update(['ginee_id' => $variationIds[$index]]);
+                }
             }
 
             return redirect()->route('product')->with('success', 'Product created successfully');
@@ -228,7 +244,7 @@ class ProductController extends Controller
     public function edit($id, Request $request)
     {
         $type = $request->query('type');
-        $categories = $this->gineeOMSService->listCategories();
+        $categories = $this->getCategories();
 
         if ($type === 'Product') {
             $product = Product::with('productVariations')->findOrFail($id);
@@ -243,72 +259,90 @@ class ProductController extends Controller
     {
         if ($request->type === 'Product') {
             $product = Product::findOrFail($id);
-            $masterProduct = $this->gineeOMSService->updateMasterProduct($product->ginee_id, $request);
-            // dd($masterProduct);
-            $data = $this->gineeOMSService->getMasterProductDetail($product->ginee_id);
-            $categories = $this->gineeOMSService->listCategories();
+            $categories = $this->getCategories();
 
-            $product->update(
-                [
-                    'ginee_id' => $data['productId'],
-                    'name' => $data['name'],
-                    'spu' => $data['spu'],
-                    'full_category_id' => $data['fullCategoryId'],
-                    'full_category_name' => $this->gineeOMSService->getFullCategoryName($categories, end($data['fullCategoryId'])),
-                    'brand' => $data['brand'],
-                    'sale_status' => $data['saleStatus'],
-                    'condition' => $data['genieProductCondition'],
-                    'has_shelf_life' => $data['extraInfo']['hasShelfLife'],
-                    'shelf_life_duration' => $data['extraInfo']['shelfLifePeriod'],
-                    'inbound_limit' => $data['extraInfo']['storageRestriction'],
-                    'outbound_limit' => $data['extraInfo']['deliveryRestriction'],
-                    'min_purchase' => $data['minPurchase'],
-                    'short_description' => $data['shortDescription'],
-                    'description' => $data['description'],
-                    'variant_options' => $data['variantOptions'],
-                    'has_variations' => !empty($data['variantOptions']),
-                    'images' => $data['images'],
-                    'length' => $data['delivery']['length'],
-                    'width' => $data['delivery']['width'],
-                    'height' => $data['delivery']['height'],
-                    'weight' => $data['delivery']['weight'],
-                    'preorder' => $data['extraInfo']['preOrder']['settingType'],
-                    'preorder_duration' => $data['extraInfo']['preOrder']['timeToShip'],
-                    'preorder_unit' => $data['extraInfo']['preOrder']['timeUnit'],
-                    'customs_chinese_name' => $data['delivery']['declareZhName'],
-                    'customs_english_name' => $data['delivery']['declareEnName'],
-                    'hs_code' => $data['delivery']['declareHsCode'],
-                    'invoice_amount' => $data['delivery']['declareAmount'],
-                    'gross_weight' => $data['delivery']['declareWeight'],
-                    'source_url' => $data['costInfo']['sourceUrl'],
-                    'purchase_duration' => $data['costInfo']['purchasingTime'],
-                    'purchase_unit' => $data['costInfo']['purchasingTimeUnit'],
-                    'sales_tax_amount' => $data['costInfo']['salesTax']['amount'],
-                    'remarks1' => $data['extraInfo']['additionInfo']['remark1'] ?? null,
-                    'remarks2' => $data['extraInfo']['additionInfo']['remark2'] ?? null,
-                    'remarks3' => $data['extraInfo']['additionInfo']['remark3'] ?? null,
-                    'sold' => 0,
-                    'review' => 0,
-                    'created_at' => $data['createDatetime'],
-                    'updated_at' => $data['updateDatetime'],
-                ]
-            );
+            // handle product
+            $product->update([
+                'name' => $request->name,
+                'is_ginee' => $request->is_ginee ? 1 : 0,
+                'spu' => $request->spu,
+                'full_category_id' => $this->getFullCategoryId($categories, $request->full_category_id),
+                'full_category_name' => $this->getFullCategoryName($categories, $request->full_category_id),
+                'brand' => $request->brand,
+                'sale_status' => $request->sale_status,
+                'condition' => $request->condition,
+                'has_shelf_life' => (bool)$request->has_shelf_life,
+                'shelf_life_duration' => $request->shelf_life_duration,
+                'inbound_limit' => $request->inbound_limit,
+                'outbound_limit' => $request->outbound_limit,
+                'min_purchase' => $request->min_purchase,
+                'short_description' => $request->short_description,
+                'description' => $request->description,
+                'has_variations' => $request->has_variations ? 1 : 0,
+                'variant_options' => $this->getVariantOptions($request),
+                'length' => $request->length ? (int)$request->length : 1,
+                'width' => $request->width ? (int)$request->width : 1,
+                'height' => $request->height ? (int)$request->height : 1,
+                'weight' => $request->weight,
+                'preorder' => $request->preorder,
+                'preorder_duration' => $request->preorder_duration,
+                'preorder_unit' => $request->preorder_unit,
+                'customs_chinese_name' => $request->customs_chinese_name,
+                'customs_english_name' => $request->customs_english_name,
+                'hs_code' => $request->hs_code,
+                'invoice_amount' => $request->invoice_amount,
+                'gross_weight' => $request->gross_weight,
+                'source_url' => $request->source_url,
+                'purchase_duration' => $request->purchase_duration,
+                'purchase_unit' => $request->purchase_unit,
+                'sales_tax_amount' => $request->sales_tax_amount,
+                'remarks1' => $request->remarks1,
+                'remarks2' => $request->remarks2,
+                'remarks3' => $request->remarks3,
+                'sold' => 0,
+                'review' => 0,
+            ]);
 
+            // handle variations
             $product->productVariations()->delete();
+            foreach ($request->variations as $variation) {
+                $product->productVariations()->create([
+                    'ginee_id' => null,
+                    'name' => $request->name,
+                    'purchase_price' => null,
+                    'price' => $variation['price'] ?? 1,
+                    'stock' => $variation['stock'],
+                    'msku' => $variation['msku'],
+                    'barcode' => $variation['barcode'],
+                    'combinations' => json_decode($variation['combinations'], true),
+                ]);
+            }
 
-            foreach ($data['variations'] as $variation) {
-                $product->productVariations()->create(
-                    [
-                        'ginee_id' => $variation['id'],
-                        'name' => $variation['productName'],
-                        'purchase_price' => $variation['purchasePrice'],
-                        'price' => $variation['sellingPrice']['amount'],
-                        'stock' => $variation['stock']['availableStock'],
-                        'msku' => $variation['sku'],
-                        'barcode' => $variation['barcode'],
-                        'combinations' => $variation['optionValues'],
-                    ]
-                );
+            // handle image, delete old image
+            $imagePaths = [];
+            if ($request->hasFile('images')) {
+                if (!empty($product->images)) {
+                    foreach ($product->images as $oldImage) {
+                        Storage::disk('public')->delete($oldImage);
+                    }
+                }
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('product_images', 'public');
+                    $imagePaths[] = $path;
+                }
+                $product->update(['images' => $imagePaths]);
+            }
+
+            // handle ginee
+            if ($request->is_ginee) {
+                $masterProduct = $this->gineeOMSService->updateMasterProduct($product);
+                // update variations ginee_id if has variations
+                $variationIds = $masterProduct['data']['variationIds'];
+                if ($variationIds) {
+                    foreach ($product->productVariations as $index => $variation) {
+                        $variation->update(['ginee_id' => $variationIds[$index]]);
+                    }
+                }
             }
         } else {
             $product = Service::findOrFail($id);
@@ -343,5 +377,109 @@ class ProductController extends Controller
         return redirect()
             ->route('product')
             ->with('success', 'Product deleted successfully');
+    }
+
+    /*
+    * UTILITY METHODS
+    */
+
+    public function getCategories()
+    {
+        $json = file_get_contents(storage_path('app/categories.json'));
+        $categories = json_decode($json, true);
+
+        return $categories;
+    }
+
+    public function findCategory($data, $id)
+    {
+        foreach ($data as $item) {
+            if ($item['id'] === $id) {
+                return $item;
+            }
+
+            if (!empty($item['children'])) {
+                $found = $this->findCategory($item['children'], $id);
+                if ($found) {
+                    return $found;
+                }
+            }
+        }
+        return null;
+    }
+
+    public function getFullCategoryId($data, $id, &$result = [])
+    {
+        if (empty($id)) {
+            return null;
+        }
+
+        $item = $this->findCategory($data, $id);
+
+        if ($item) {
+            array_unshift($result, $item['id']);
+
+            if (isset($item['parentId']) && $item['parentId'] !== '0') {
+                $this->getFullCategoryId($data, $item['parentId'], $result);
+            }
+        }
+
+        return $result;
+    }
+
+    public function getFullCategoryName($data, $id, &$result = [])
+    {
+        if (empty($id)) {
+            return null;
+        }
+
+        $item = $this->findCategory($data, $id);
+
+        if ($item) {
+            array_unshift($result, $item['name']);
+
+            if (isset($item['parentId']) && $item['parentId'] !== '0') {
+                $this->getFullCategoryName($data, $item['parentId'], $result);
+            }
+        }
+
+        return $result;
+    }
+
+    public function getVariantOptions(Request $request): array
+    {
+        $variantOptions = [];
+
+        if (!empty($request->variantTypes[0]['name']) && !empty($request->variantTypes[0]['values'])) {
+            $variantOptions[] = [
+                'name' => $request->variantTypes[0]['name'],
+                'values' => explode(',', $request->variantTypes[0]['values']),
+            ];
+        }
+
+        if (!empty($request->variantTypes[1]['name']) && !empty($request->variantTypes[1]['values'])) {
+            $variantOptions[] = [
+                'name' => $request->variantTypes[1]['name'],
+                'values' => explode(',', $request->variantTypes[1]['values']),
+            ];
+        }
+
+        return $variantOptions;
+    }
+
+    public function getNameById($categories, $id)
+    {
+        foreach ($categories as $item) {
+            if ($item['id'] == $id) {
+                return $item['name'];
+            }
+            if (!empty($item['children'])) {
+                $result = $this->getNameById($item['children'], $id);
+                if ($result !== null) {
+                    return $result;
+                }
+            }
+        }
+        return null;
     }
 }

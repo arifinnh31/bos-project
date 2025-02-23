@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Product;
 use App\Services\GineeOMSService;
-use Illuminate\Support\Facades\Log;
 
 class ImportProductsDaily extends Command
 {
@@ -24,7 +23,7 @@ class ImportProductsDaily extends Command
             return;
         }
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < $totalProducts; $i++) {
             $masterProduct = $gineeOMSService->listMasterProducts($i, 1);
             $productId = $masterProduct['content'][0]['productId'];
             $data = $gineeOMSService->getMasterProductDetail($productId);
@@ -36,7 +35,7 @@ class ImportProductsDaily extends Command
                     'name' => $data['name'],
                     'spu' => $data['spu'],
                     'full_category_id' => $data['fullCategoryId'],
-                    'full_category_name' => $gineeOMSService->getFullCategoryName($categories, end($data['fullCategoryId'])),
+                    'full_category_name' => $this->getFullCategoryName($categories, end($data['fullCategoryId'])),
                     'brand' => $data['brand'],
                     'sale_status' => $data['saleStatus'],
                     'condition' => $data['genieProductCondition'],
@@ -66,9 +65,9 @@ class ImportProductsDaily extends Command
                     'purchase_duration' => $data['costInfo']['purchasingTime'],
                     'purchase_unit' => $data['costInfo']['purchasingTimeUnit'],
                     'sales_tax_amount' => $data['costInfo']['salesTax']['amount'],
-                    'remarks1' => $data['extraInfo']['additionInfo']['remark1'] ?? null,
-                    'remarks2' => $data['extraInfo']['additionInfo']['remark2'] ?? null,
-                    'remarks3' => $data['extraInfo']['additionInfo']['remark3'] ?? null,
+                    'remarks1' => $data['extraInfo']['additionInfo']['remark1'],
+                    'remarks2' => $data['extraInfo']['additionInfo']['remark2'],
+                    'remarks3' => $data['extraInfo']['additionInfo']['remark3'],
                     'sold' => 0,
                     'review' => 0,
                     'created_at' => $data['createDatetime'],
@@ -94,5 +93,41 @@ class ImportProductsDaily extends Command
         }
 
         $this->info('Product import completed successfully!');
+    }
+
+    public function findCategory($data, $id)
+    {
+        foreach ($data as $item) {
+            if ($item['id'] === $id) {
+                return $item;
+            }
+
+            if (!empty($item['children'])) {
+                $found = $this->findCategory($item['children'], $id);
+                if ($found) {
+                    return $found;
+                }
+            }
+        }
+        return null;
+    }
+
+    public function getFullCategoryName($data, $id, &$result = [])
+    {
+        if (empty($id)) {
+            return null;
+        }
+
+        $item = $this->findCategory($data, $id);
+
+        if ($item) {
+            array_unshift($result, $item['name']);
+
+            if (isset($item['parentId']) && $item['parentId'] !== '0') {
+                $this->getFullCategoryName($data, $item['parentId'], $result);
+            }
+        }
+
+        return $result;
     }
 }

@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'AdminLTE 3',
+    'title' => 'BOS - Bright Operating System',
     'title_prefix' => '',
     'title_postfix' => '',
 

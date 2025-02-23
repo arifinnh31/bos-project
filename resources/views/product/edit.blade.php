@@ -16,7 +16,7 @@
 
                 @if (request()->type === 'Product')
                     <!-- Basic Information -->
-                    <h4 style="font-weight: bold;">Basic Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Basic Information</h4>
 
                     <div class="row">
                         <div class="col-md-6">
@@ -185,7 +185,7 @@
                     </div>
 
                     <!-- Product Information -->
-                    <h4 style="font-weight: bold;">Product Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Product Information</h4>
 
                     <div class="form-group d-flex align-items-center">
                         <label for="product-variations" class="mr-2">The product has variations</label>
@@ -285,7 +285,7 @@
                             @if ($product->has_variations)
                                 @foreach ($product->productVariations as $index => $variation)
                                     <tr>
-                                        <td>{{ $variation->name }}</td>
+                                        <td>{{ implode(" / ", $variation->combinations) }}</td>
                                         <td>
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
@@ -346,14 +346,14 @@
                                             placeholder="Barcode only supports letters, numbers and -_">
                                     </td>
                                     <input type="hidden" name="variations[0][name]" value="Default">
-                                    <input type="hidden" name="variations[0][combinations]" value='[]'>
+                                    <input type="hidden" name="variations[0][combinations]" value='["-"]'>
                                 </tr>
                             @endif
                         </tbody>
                     </table>
 
                     <!-- Media Settings -->
-                    <h4 style="font-weight: bold;">Media Settings</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Media Settings</h4>
 
                     <div class="form-group">
                         <label for="images">Product Image Max. 9</label>
@@ -374,7 +374,7 @@
                     </div>
 
                     <!-- Delivery -->
-                    <h4 style="font-weight: bold;">Delivery</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Delivery</h4>
 
                     <div class="row">
                         <div class="col-md-4">
@@ -457,7 +457,7 @@
                     </div>
 
                     <!-- Customs Information -->
-                    <h4 style="font-weight: bold;">Customs Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Customs Information</h4>
 
                     <div class="row">
                         <div class="col-md-4">
@@ -507,7 +507,7 @@
                     </div>
 
                     <!-- Cost Information -->
-                    <h4 style="font-weight: bold;">Cost Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Cost Information</h4>
 
                     <div class="row">
                         <div class="col-md-8">
@@ -557,7 +557,7 @@
                     </div>
 
                     <!-- Other Information -->
-                    <h4 style="font-weight: bold;">Other Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Other Information</h4>
 
                     <div class="row">
                         <div class="col-md-4">
@@ -584,6 +584,15 @@
                                     maxlength="50" value="{{ $product->remarks3 }}">
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Ginee OMS -->
+                    <h4 style="font-weight: bold; margin-top: 15px;">Ginee OMS</h4>
+
+                    <div class="form-group d-flex align-items-center">
+                        <label for="is-ginee" class="mr-2">Update product to Ginee OMS</label>
+                        <input type="checkbox" id="is-ginee" name="is_ginee" value="1" class="form-control"
+                            style="width: auto;" {{ $product->is_ginee ? 'checked' : '' }}>
                     </div>
                 @else
                     <div class="row">
@@ -687,36 +696,38 @@
                     const tagElement = document.createElement('span');
                     tagElement.className = 'tag badge badge-secondary mr-1';
                     tagElement.innerHTML = `
-                    ${tag}
-                    <span class="remove-tag" data-index="${index}">&times;</span>
-                `;
+                ${tag}
+                <span class="remove-tag" data-index="${index}">&times;</span>
+            `;
                     tagsContainer.appendChild(tagElement);
                 });
-                hiddenInput.value = tags.join(',');
+                hiddenInput.value = tags.join(','); // Update hidden input with current tags
                 generateVariationRows(); // Regenerate rows when tags change
             }
 
+            // Add tag when "Enter" is pressed
             tagInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
-                    e.preventDefault();
+                    e.preventDefault(); // Prevent form submission
                     const value = this.value.trim();
                     if (value && !tags.includes(value)) {
                         tags.push(value);
                         renderTags();
-                        this.value = '';
+                        this.value = ''; // Clear the input field
                     }
                 }
             });
 
+            // Remove tag when the "×" button is clicked
             tagsContainer.addEventListener('click', function(e) {
                 if (e.target.classList.contains('remove-tag')) {
                     const index = parseInt(e.target.dataset.index);
-                    tags.splice(index, 1);
+                    tags.splice(index, 1); // Remove the tag from the array
                     renderTags();
                 }
             });
 
-            renderTags();
+            renderTags(); // Initialize tags on page load
         }
 
         function generateVariationRows() {
@@ -727,27 +738,27 @@
             if (!has_variations) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                <td>-</td>
-                <td>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Rp</span>
-                        </div>
-                        <input type="number" name="variations[0][price]" class="form-control" placeholder="Please Enter">
+            <td>-</td>
+            <td>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">Rp</span>
                     </div>
-                </td>
-                <td>
-                    <input type="number" name="variations[0][stock]" class="form-control" placeholder="Should be between 0-999,999" >
-                </td>
-                <td>
-                    <input type="text" name="variations[0][msku]" class="form-control" placeholder="Please Enter" >
-                </td>
-                <td>
-                    <input type="text" name="variations[0][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
-                </td>
-                <input type="hidden" name="variations[0][name]" value="Default">
-                <input type="hidden" name="variations[0][combinations]" value='[]'>
-            `;
+                    <input type="number" name="variations[0][price]" class="form-control" placeholder="Please Enter">
+                </div>
+            </td>
+            <td>
+                <input type="number" name="variations[0][stock]" class="form-control" placeholder="Should be between 0-999,999" >
+            </td>
+            <td>
+                <input type="text" name="variations[0][msku]" class="form-control" placeholder="Please Enter" >
+            </td>
+            <td>
+                <input type="text" name="variations[0][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
+            </td>
+            <input type="hidden" name="variations[0][name]" value="Default">
+            <input type="hidden" name="variations[0][combinations]" value='["-"]'>
+        `;
                 tbody.appendChild(row);
                 return;
             }
@@ -779,27 +790,27 @@
             combinations.forEach((combination, index) => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                <td>${combination.join(' / ')}</td>
-                <td>
-                    <div class="input-group">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text">Rp</span>
-                        </div>
-                        <input type="number" name="variations[${index}][price]" class="form-control" placeholder="Please Enter">
+            <td>${combination.join(' / ')}</td>
+            <td>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">Rp</span>
                     </div>
-                </td>
-                <td>
-                    <input type="number" name="variations[${index}][stock]" class="form-control" placeholder="Should be between 0-999,999" >
-                </td>
-                <td>
-                    <input type="text" name="variations[${index}][msku]" class="form-control" placeholder="Please Enter" >
-                </td>
-                <td>
-                    <input type="text" name="variations[${index}][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
-                </td>
-                <input type="hidden" name="variations[${index}][name]" value="${combination.join(' / ')}">
-                <input type="hidden" name="variations[${index}][combinations]" value='${JSON.stringify(combination)}'>
-            `;
+                    <input type="number" name="variations[${index}][price]" class="form-control" placeholder="Please Enter">
+                </div>
+            </td>
+            <td>
+                <input type="number" name="variations[${index}][stock]" class="form-control" placeholder="Should be between 0-999,999" >
+            </td>
+            <td>
+                <input type="text" name="variations[${index}][msku]" class="form-control" placeholder="Please Enter" >
+            </td>
+            <td>
+                <input type="text" name="variations[${index}][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
+            </td>
+            <input type="hidden" name="variations[${index}][name]" value="${combination.join(' / ')}">
+            <input type="hidden" name="variations[${index}][combinations]" value='${JSON.stringify(combination)}'>
+        `;
                 tbody.appendChild(row);
             });
         }
@@ -834,22 +845,21 @@
         }
 
         window.onload = function() {
+            toggleShelfLife();
             togglePreorderFields();
             updatePreorderPlaceholder();
+
+            const shelfLifeSelect = document.getElementById('shelf-life');
+            shelfLifeSelect.addEventListener('change', toggleShelfLife);
 
             document.querySelectorAll('input[name="preorder"]').forEach(radio => {
                 radio.addEventListener('change', togglePreorderFields);
             });
-
             document.getElementById('preorder-unit').addEventListener('change', updatePreorderPlaceholder);
         };
 
         document.addEventListener('DOMContentLoaded', function() {
             toggleForm();
-            toggleShelfLife();
-
-            const shelfLifeSelect = document.getElementById('shelf-life');
-            shelfLifeSelect.addEventListener('change', toggleShelfLife);
 
             const has_variationsCheckbox = document.getElementById('product-variations');
             has_variationsCheckbox.addEventListener('change', function() {

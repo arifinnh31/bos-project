@@ -27,7 +27,7 @@
                 <!-- Form for Product -->
                 <div id="form_product" style="display: none;">
                     <!-- Basic Information -->
-                    <h4 style="font-weight: bold;">Basic Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Basic Information</h4>
 
                     <div class="row">
                         <div class="col-md-6">
@@ -181,7 +181,7 @@
                     </div>
 
                     <!-- Product Information -->
-                    <h4 style="font-weight: bold;">Product Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Product Information</h4>
 
                     <div class="form-group d-flex align-items-center">
                         <label for="product-variations" class="mr-2">The product has variations</label>
@@ -276,13 +276,13 @@
                                         placeholder="Barcode only supports letters, numbers and -_">
                                 </td>
                                 <input type="hidden" name="variations[0][name]" value="Default">
-                                <input type="hidden" name="variations[0][combinations]" value='[]'>
+                                <input type="hidden" name="variations[0][combinations]" value='["-"]'>
                             </tr>
                         </tbody>
                     </table>
 
                     <!-- Media Settings -->
-                    <h4 style="font-weight: bold;">Media Settings</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Media Settings</h4>
 
                     <div class="form-group">
                         <label for="images">Product Image Max. 9</label>
@@ -291,7 +291,7 @@
                     </div>
 
                     <!-- Delivery -->
-                    <h4 style="font-weight: bold;">Delivery</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Delivery</h4>
 
                     <div class="row">
                         <div class="col-md-4">
@@ -362,7 +362,7 @@
                     </div>
 
                     <!-- Customs Information -->
-                    <h4 style="font-weight: bold;">Customs Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Customs Information</h4>
 
                     <div class="row">
                         <div class="col-md-4">
@@ -410,7 +410,7 @@
                     </div>
 
                     <!-- Cost Information -->
-                    <h4 style="font-weight: bold;">Cost Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Cost Information</h4>
 
                     <div class="row">
                         <div class="col-md-8">
@@ -456,7 +456,7 @@
                     </div>
 
                     <!-- Other Information -->
-                    <h4 style="font-weight: bold;">Other Information</h4>
+                    <h4 style="font-weight: bold; margin-top: 15px;">Other Information</h4>
 
                     <div class="row">
                         <div class="col-md-4">
@@ -483,6 +483,15 @@
                                     maxlength="50">
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Ginee OMS -->
+                    <h4 style="font-weight: bold; margin-top: 15px;">Ginee OMS</h4>
+
+                    <div class="form-group d-flex align-items-center">
+                        <label for="is-ginee" class="mr-2">Create product to Ginee OMS</label>
+                        <input type="checkbox" id="is-ginee" name="is_ginee" value="1" class="form-control"
+                            style="width: auto;">
                     </div>
                 </div>
 
@@ -665,7 +674,7 @@
                     <input type="text" name="variations[0][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
                 </td>
                 <input type="hidden" name="variations[0][name]" value="Default">
-                <input type="hidden" name="variations[0][combinations]" value='[]'>
+                <input type="hidden" name="variations[0][combinations]" value='["-"]'>
             `;
                 tbody.appendChild(row);
                 return;
@@ -759,7 +768,6 @@
         document.querySelectorAll('input[name="preorder"]').forEach(radio => {
             radio.addEventListener('change', togglePreorderFields);
         });
-
         document.getElementById('preorder-unit').addEventListener('change', updatePreorderPlaceholder);
 
         document.addEventListener('DOMContentLoaded', function() {
