@@ -264,7 +264,7 @@ class ProductController extends Controller
             // handle product
             $product->update([
                 'name' => $request->name,
-                'is_ginee' => $request->is_ginee ? 1 : 0,
+                // 'is_ginee' => $request->is_ginee ? 1 : 0,
                 'spu' => $request->spu,
                 'full_category_id' => $this->getFullCategoryId($categories, $request->full_category_id),
                 'full_category_name' => $this->getFullCategoryName($categories, $request->full_category_id),
@@ -335,10 +335,21 @@ class ProductController extends Controller
 
             // handle ginee
             if ($request->is_ginee) {
-                $masterProduct = $this->gineeOMSService->updateMasterProduct($product);
-                // update variations ginee_id if has variations
-                $variationIds = $masterProduct['data']['variationIds'];
-                if ($variationIds) {
+                if ($product->is_ginee) {
+                    $this->gineeOMSService->updateMasterProduct($product);
+                    // update variations ginee_id if has variations
+                    $masterProduct = $this->gineeOMSService->getMasterProductDetail($product->ginee_id);
+                    $variations = $masterProduct['variations'];
+                    foreach ($product->productVariations as $index => $variation) {
+                        $variation->update(['ginee_id' => $variations[$index]['id']]);
+                    }
+                } else {
+                    $masterProduct = $this->gineeOMSService->createMasterProduct($product);
+                    // update product ginee_id
+                    $productId = $masterProduct['data']['productId'];
+                    $product->update(['ginee_id' => $productId]);
+                    // update variations ginee_id
+                    $variationIds = $masterProduct['data']['variationIds'];
                     foreach ($product->productVariations as $index => $variation) {
                         $variation->update(['ginee_id' => $variationIds[$index]]);
                     }

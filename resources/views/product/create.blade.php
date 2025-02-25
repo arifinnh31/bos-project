@@ -9,7 +9,7 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('product.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="form" action="{{ route('product.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <!-- Select Type -->
                 <div class="row">
@@ -208,7 +208,7 @@
                                     <div class="tags-input-wrapper">
                                         <div class="tags-container" id="tags-container-1"></div>
                                         <input type="text" id="tag-input-1" class="form-control tag-input"
-                                            placeholder="Enter a option, for example: Red, etc">
+                                            placeholder="Enter a option, for example: Red, Yellow, etc">
                                         <input type="hidden" name="variantTypes[0][values]" id="values-hidden-1">
                                     </div>
                                 </div>
@@ -275,7 +275,7 @@
                                     <input type="text" name="variations[0][barcode]" class="form-control"
                                         placeholder="Barcode only supports letters, numbers and -_">
                                 </td>
-                                <input type="hidden" name="variations[0][name]" value="Default">
+                                <input type="hidden" name="variations[0][name]" value="-">
                                 <input type="hidden" name="variations[0][combinations]" value='["-"]'>
                             </tr>
                         </tbody>
@@ -443,7 +443,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group ">
-                                <label for="sales-tax-amount">Sales Tax Amount (Rp)</label>
+                                <label for="sales-tax-amount">Sales Tax Amount</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Rp</span>
@@ -541,7 +541,7 @@
 
                 </div>
 
-                <button type="submit" class="btn btn-success">Simpan</button>
+                <button id="submit" type="submit" class="btn btn-success">Simpan</button>
             </form>
         </div>
     </div>
@@ -554,6 +554,20 @@
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        document.getElementById('form').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+            }
+        });
+
+        document.getElementById('form').addEventListener('submit', function(event) {
+            if (event.submitter && event.submitter.id === 'submit') {
+                // Allow form submission
+            } else {
+                event.preventDefault();
+            }
+        });
+
         function toggleForm() {
             const type = document.getElementById('type').value;
             const formProduct = document.getElementById('form_product');
@@ -673,7 +687,7 @@
                 <td>
                     <input type="text" name="variations[0][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
                 </td>
-                <input type="hidden" name="variations[0][name]" value="Default">
+                <input type="hidden" name="variations[0][name]" value="-">
                 <input type="hidden" name="variations[0][combinations]" value='["-"]'>
             `;
                 tbody.appendChild(row);

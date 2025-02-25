@@ -9,7 +9,7 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('product.update', ['id' => $product->id]) }}" method="POST" enctype="multipart/form-data">
+            <form id="form" action="{{ route('product.update', ['id' => $product->id]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="type" value="{{ request()->type }}">
@@ -282,73 +282,7 @@
                             </tr>
                         </thead>
                         <tbody id="variations-body">
-                            @if ($product->has_variations)
-                                @foreach ($product->productVariations as $index => $variation)
-                                    <tr>
-                                        <td>{{ implode(" / ", $variation->combinations) }}</td>
-                                        <td>
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text">Rp</span>
-                                                </div>
-                                                <input type="number" name="variations[{{ $index }}][price]"
-                                                    class="form-control" value="{{ $variation->price }}"
-                                                    placeholder="Please Enter">
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <input type="number" name="variations[{{ $index }}][stock]"
-                                                class="form-control" value="{{ $variation->stock }}"
-                                                placeholder="Should be between 0-999,999">
-                                        </td>
-                                        <td>
-                                            <input type="text" name="variations[{{ $index }}][msku]"
-                                                class="form-control" value="{{ $variation->msku }}"
-                                                placeholder="Please Enter">
-                                        </td>
-                                        <td>
-                                            <input type="text" name="variations[{{ $index }}][barcode]"
-                                                class="form-control" value="{{ $variation->barcode }}"
-                                                placeholder="Barcode only supports letters, numbers and -_">
-                                        </td>
-                                        <input type="hidden" name="variations[{{ $index }}][name]"
-                                            value="{{ $variation->name }}">
-                                        <input type="hidden" name="variations[{{ $index }}][combinations]"
-                                            value='{{ json_encode($variation->combinations) }}'>
-                                    </tr>
-                                @endforeach
-                            @else
-                                <tr>
-                                    <td>-</td>
-                                    <td>
-                                        <div class="input-group">
-                                            <div class="input-group-prepend">
-                                                <span class="input-group-text">Rp</span>
-                                            </div>
-                                            <input type="number" name="variations[0][price]" class="form-control"
-                                                value="{{ $product->productVariations[0]->price }}"
-                                                placeholder="Please Enter">
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <input type="number" name="variations[0][stock]" class="form-control"
-                                            value="{{ $product->productVariations[0]->stock }}"
-                                            placeholder="Should be between 0-999,999">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="variations[0][msku]" class="form-control"
-                                            value="{{ $product->productVariations[0]->msku }}"
-                                            placeholder="Please Enter">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="variations[0][barcode]" class="form-control"
-                                            value="{{ $product->productVariations[0]->barcode }}"
-                                            placeholder="Barcode only supports letters, numbers and -_">
-                                    </td>
-                                    <input type="hidden" name="variations[0][name]" value="Default">
-                                    <input type="hidden" name="variations[0][combinations]" value='["-"]'>
-                                </tr>
-                            @endif
+                            <!-- Isi tabel akan di-generate oleh JavaScript -->
                         </tbody>
                     </table>
 
@@ -543,7 +477,7 @@
                         {{-- Sales Tax Amount --}}
                         <div class="col-md-4">
                             <div class="form-group ">
-                                <label for="sales-tax-amount">Sales Tax Amount (Rp)</label>
+                                <label for="sales-tax-amount">Sales Tax Amount</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Rp</span>
@@ -590,7 +524,7 @@
                     <h4 style="font-weight: bold; margin-top: 15px;">Ginee OMS</h4>
 
                     <div class="form-group d-flex align-items-center">
-                        <label for="is-ginee" class="mr-2">Update product to Ginee OMS</label>
+                        <label for="is-ginee" class="mr-2">{{ $product->is_ginee ? 'Update' : 'Create' }} product to Ginee OMS</label>
                         <input type="checkbox" id="is-ginee" name="is_ginee" value="1" class="form-control"
                             style="width: auto;" {{ $product->is_ginee ? 'checked' : '' }}>
                     </div>
@@ -638,7 +572,7 @@
                     </div>
                 @endif
 
-                <button type="submit" class="btn btn-success">Update</button>
+                <button id="submit" type="submit" class="btn btn-success">Update</button>
                 <a href="{{ route('product.detail', ['id' => $product->id, 'type' => request()->type]) }}"
                     class="btn btn-secondary">Cancel</a>
             </form>
@@ -653,6 +587,20 @@
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        document.getElementById('form').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+            }
+        });
+
+        document.getElementById('form').addEventListener('submit', function(event) {
+            if (event.submitter && event.submitter.id === 'submit') {
+                // Allow form submission
+            } else {
+                event.preventDefault();
+            }
+        });
+
         $(document).ready(function() {
             $('#full_category_id').select2({
                 placeholder: "Select Master Category",
@@ -701,33 +649,31 @@
             `;
                     tagsContainer.appendChild(tagElement);
                 });
-                hiddenInput.value = tags.join(','); // Update hidden input with current tags
+                hiddenInput.value = tags.join(',');
                 generateVariationRows(); // Regenerate rows when tags change
             }
 
-            // Add tag when "Enter" is pressed
             tagInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
-                    e.preventDefault(); // Prevent form submission
+                    e.preventDefault();
                     const value = this.value.trim();
                     if (value && !tags.includes(value)) {
                         tags.push(value);
                         renderTags();
-                        this.value = ''; // Clear the input field
+                        this.value = '';
                     }
                 }
             });
 
-            // Remove tag when the "×" button is clicked
             tagsContainer.addEventListener('click', function(e) {
                 if (e.target.classList.contains('remove-tag')) {
                     const index = parseInt(e.target.dataset.index);
-                    tags.splice(index, 1); // Remove the tag from the array
+                    tags.splice(index, 1);
                     renderTags();
                 }
             });
 
-            renderTags(); // Initialize tags on page load
+            renderTags();
         }
 
         function generateVariationRows() {
@@ -735,7 +681,14 @@
             const has_variations = document.getElementById('product-variations').checked;
             tbody.innerHTML = '';
 
+            // Ambil nilai yang sudah ada dari input tersembunyi
+            const existingVariations = @json($product->productVariations);
+            const existingVariationsLength = existingVariations.length;
+
             if (!has_variations) {
+                // Cari nilai default dari produk yang tidak memiliki variasi
+                const defaultVariation = existingVariations[0];
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
             <td>-</td>
@@ -744,17 +697,17 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text">Rp</span>
                     </div>
-                    <input type="number" name="variations[0][price]" class="form-control" placeholder="Please Enter">
+                    <input type="number" name="variations[0][price]" class="form-control" placeholder="Please Enter" value="${defaultVariation.price || ''}">
                 </div>
             </td>
             <td>
-                <input type="number" name="variations[0][stock]" class="form-control" placeholder="Should be between 0-999,999" >
+                <input type="number" name="variations[0][stock]" class="form-control" placeholder="Should be between 0-999,999" value="${defaultVariation.stock || ''}">
             </td>
             <td>
-                <input type="text" name="variations[0][msku]" class="form-control" placeholder="Please Enter" >
+                <input type="text" name="variations[0][msku]" class="form-control" placeholder="Please Enter" value="${defaultVariation.msku || ''}">
             </td>
             <td>
-                <input type="text" name="variations[0][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
+                <input type="text" name="variations[0][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_" value="${defaultVariation.barcode || ''}">
             </td>
             <input type="hidden" name="variations[0][name]" value="Default">
             <input type="hidden" name="variations[0][combinations]" value='["-"]'>
@@ -763,6 +716,7 @@
                 return;
             }
 
+            // Logika untuk produk dengan variasi
             const type1Name = document.getElementById('variation-type-1').value || '';
             const type2Name = document.getElementById('variation-type-2').value || '';
             const values1 = document.getElementById('values-hidden-1').value.split(',').filter(item => item.trim());
@@ -787,28 +741,52 @@
                 });
             }
 
+            let i = 0;
+
             combinations.forEach((combination, index) => {
+                const combinationName = combination.join(' / ');
+
+                // Cari nilai yang sudah ada berdasarkan kombinasi
+                const existingVariation = existingVariations.find(variation => {
+                    return JSON.stringify(variation.combinations) === JSON.stringify(combination);
+                });
+
+                const isExist = combination[1] == values2[0] && i < existingVariationsLength;
+
+                const price = existingVariation ? existingVariation.price : (isExist ? existingVariations[i].price :
+                    '');
+                const stock = existingVariation ? existingVariation.stock : (isExist ? existingVariations[i].stock :
+                    '');
+                const msku = existingVariation ? existingVariation.msku : (isExist ? existingVariations[i].msku :
+                    '');
+                const barcode = existingVariation ? existingVariation.barcode : (isExist ? existingVariations[i]
+                    .barcode : '');
+
+                if (isExist) {
+                    i++;
+                }
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
-            <td>${combination.join(' / ')}</td>
+            <td>${combinationName}</td>
             <td>
                 <div class="input-group">
                     <div class="input-group-prepend">
                         <span class="input-group-text">Rp</span>
                     </div>
-                    <input type="number" name="variations[${index}][price]" class="form-control" placeholder="Please Enter">
+                    <input type="number" name="variations[${index}][price]" class="form-control" placeholder="Please Enter" value="${price || ''}">
                 </div>
             </td>
             <td>
-                <input type="number" name="variations[${index}][stock]" class="form-control" placeholder="Should be between 0-999,999" >
+                <input type="number" name="variations[${index}][stock]" class="form-control" placeholder="Should be between 0-999,999" value="${stock || ''}">
             </td>
             <td>
-                <input type="text" name="variations[${index}][msku]" class="form-control" placeholder="Please Enter" >
+                <input type="text" name="variations[${index}][msku]" class="form-control" placeholder="Please Enter" value="${msku || ''}">
             </td>
             <td>
-                <input type="text" name="variations[${index}][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_">
+                <input type="text" name="variations[${index}][barcode]" class="form-control" placeholder="Barcode only supports letters, numbers and -_" value="${barcode || ''}">
             </td>
-            <input type="hidden" name="variations[${index}][name]" value="${combination.join(' / ')}">
+            <input type="hidden" name="variations[${index}][name]" value="${combinationName}">
             <input type="hidden" name="variations[${index}][combinations]" value='${JSON.stringify(combination)}'>
         `;
                 tbody.appendChild(row);
@@ -859,8 +837,6 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            toggleForm();
-
             const has_variationsCheckbox = document.getElementById('product-variations');
             has_variationsCheckbox.addEventListener('change', function() {
                 toggleVariationFields();
@@ -880,6 +856,12 @@
             document.getElementById('values-hidden-2').addEventListener('change', generateVariationRows);
 
             generateVariationRows();
+
+            document.querySelector("form").addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                }
+            });
         });
     </script>
 @stop

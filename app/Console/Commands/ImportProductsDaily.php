@@ -23,7 +23,7 @@ class ImportProductsDaily extends Command
             return;
         }
 
-        for ($i = 0; $i < $totalProducts; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $masterProduct = $gineeOMSService->listMasterProducts($i, 1);
             $productId = $masterProduct['content'][0]['productId'];
             $data = $gineeOMSService->getMasterProductDetail($productId);

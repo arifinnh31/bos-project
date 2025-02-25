@@ -3,9 +3,8 @@
 namespace App\Services;
 
 use App\Models\Product;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use stdClass;
 
 class GineeOMSService
@@ -71,7 +70,7 @@ class GineeOMSService
             'shortDescription' => $product->short_description,
             'description' => $product->description,
             'extraInfo' => [
-                'hasShelfLife' => (bool)$product->has_shelf_life,
+                'hasShelfLife' => $product->has_shelf_life,
                 'shelfLifePeriod' => $product->shelf_life_duration,
                 'storageRestriction' => $product->inbound_limit,
                 'deliveryRestriction' => $product->outbound_limit,
@@ -127,11 +126,6 @@ class GineeOMSService
                 $data['images'][] = $response['imageUrl'];
             }
         }
-
-        // $data['images'] = [
-        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824148_3505122485.jpg",
-        //     "https://cdn-oss.ginee.com/api/prod/images/OPEN_API_20250221161824841_3303092257.jpg"
-        // ];
 
         // handle variations
         foreach ($product->productVariations as $variation) {
@@ -169,7 +163,7 @@ class GineeOMSService
             'shortDescription' => $product->short_description,
             'description' => $product->description,
             'extraInfo' => [
-                'hasShelfLife' => (bool)$product->has_shelf_life,
+                'hasShelfLife' => $product->has_shelf_life,
                 'shelfLifePeriod' => $product->shelf_life_duration,
                 'storageRestriction' => $product->inbound_limit,
                 'deliveryRestriction' => $product->outbound_limit,
@@ -244,7 +238,6 @@ class GineeOMSService
             ];
         }
 
-        // dd($data, $this->makeRequest('POST', '/openapi/product/master/v1/update', $data));
         return $this->makeRequest('POST', '/openapi/product/master/v1/update', $data);
     }
 
