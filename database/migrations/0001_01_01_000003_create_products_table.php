@@ -25,8 +25,8 @@ return new class extends Migration
             $table->enum('condition', ['NEW', 'USED'])->default('NEW')->nullable();;
             $table->boolean('has_shelf_life')->default(false)->nullable();
             $table->integer('shelf_life_duration')->nullable();
-            $table->decimal('inbound_limit', 4, 2)->nullable();
-            $table->decimal('outbound_limit', 4, 2)->nullable();
+            $table->decimal('inbound_limit', 3, 2)->nullable();
+            $table->decimal('outbound_limit', 3, 2)->nullable();
             $table->integer('min_purchase')->nullable()->default(1);
             $table->text('short_description')->nullable();
             $table->text('description')->nullable();

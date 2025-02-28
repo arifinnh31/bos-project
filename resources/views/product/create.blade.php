@@ -128,9 +128,14 @@
                         </div>
                         <div class="col-md-2" id="custom-shelf-life" style="display: none;">
                             <div class="form-group">
-                                <label for="shelf-life-duration">Shelf Life Duration (days)</label>
-                                <input type="number" id="shelf-life-duration" name="shelf_life_duration"
-                                    class="form-control" placeholder="Please Enter">
+                                <label for="shelf-life-duration">Shelf Life Duration</label>
+                                <div class="input-group">
+                                    <input type="number" id="shelf-life-duration" name="shelf_life_duration"
+                                        class="form-control" placeholder="Please Enter">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">days</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -165,7 +170,8 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="short_description">Short description</label>
-                                <textarea id="short_description" name="short_description" class="form-control" placeholder="Please Enter">{{ old('short_description') }}</textarea>
+                                <textarea id="short_description" name="short_description" class="form-control" placeholder="Please Enter"
+                                    maxlength="3000">{{ old('short_description') }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -175,7 +181,7 @@
                             <div class="form-group">
                                 <label for="long-description">Long description</label>
                                 <textarea id="long-description" class="form-control" name='description'
-                                    placeholder="Type your description here and apply it to your product" maxlength="7000"></textarea>
+                                    placeholder="Type your description here and apply it to your product" maxlength="60000"></textarea>
                             </div>
                         </div>
                     </div>
@@ -252,32 +258,6 @@
                             </tr>
                         </thead>
                         <tbody id="variations-body">
-                            <tr>
-                                <td>-</td>
-                                <td>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text">Rp</span>
-                                        </div>
-                                        <input type="number" name="variations[0][price]" class="form-control"
-                                            placeholder="Please Enter">
-                                    </div>
-                                </td>
-                                <td>
-                                    <input type="number" name="variations[0][stock]" class="form-control"
-                                        placeholder="Should be between 0-999,999">
-                                </td>
-                                <td>
-                                    <input type="text" name="variations[0][msku]" class="form-control"
-                                        placeholder="Please Enter">
-                                </td>
-                                <td>
-                                    <input type="text" name="variations[0][barcode]" class="form-control"
-                                        placeholder="Barcode only supports letters, numbers and -_">
-                                </td>
-                                <input type="hidden" name="variations[0][name]" value="-">
-                                <input type="hidden" name="variations[0][combinations]" value='["-"]'>
-                            </tr>
                         </tbody>
                     </table>
 
@@ -296,32 +276,52 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="length">Length (cm)</label>
-                                <input type="number" id="length" name="length" class="form-control"
-                                    placeholder="Please Enter">
+                                <label for="length">Length</label>
+                                <div class="input-group">
+                                    <input type="number" id="length" name="length" class="form-control"
+                                        placeholder="Please Enter">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">cm</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="width">Width (cm)</label>
-                                <input type="number" id="width" name="width" class="form-control"
-                                    placeholder="Please Enter">
+                                <label for="width">Width</label>
+                                <div class="input-group">
+                                    <input type="number" id="width" name="width" class="form-control"
+                                        placeholder="Please Enter">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">cm</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="height">Height (cm)</label>
-                                <input type="number" id="height" name="height" class="form-control"
-                                    placeholder="Please Enter">
+                                <label for="height">Height</label>
+                                <div class="input-group">
+                                    <input type="number" id="height" name="height" class="form-control"
+                                        placeholder="Please Enter">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">cm</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="weight">Weight (g)</label>
-                                <input type="number" id="weight" name="weight" class="form-control"
-                                    placeholder="Please Enter">
+                                <label for="weight">Weight</label>
+                                <div class="input-group">
+                                    <input type="number" id="weight" name="weight" class="form-control"
+                                        placeholder="Please Enter">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -402,9 +402,14 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="gross-weight">Gross Weight (g)</label>
-                                <input type="number" id="gross-weight" name="gross_weight" class="form-control"
-                                    placeholder="Please Enter">
+                                <label for="gross-weight">Gross Weight</label>
+                                <div class="input-group">
+                                    <input type="number" id="gross-weight" name="gross_weight" class="form-control"
+                                        placeholder="Please Enter">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -548,11 +553,13 @@
 @stop
 
 @section('css')
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.2.1/ckeditor5.css">
 @stop
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.2.1/ckeditor5.umd.js"></script>
     <script>
         document.getElementById('form').addEventListener('keydown', function(event) {
             if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
@@ -808,5 +815,31 @@
 
             generateVariationRows();
         });
+    </script>
+    <script>
+        const {
+            ClassicEditor,
+            Essentials,
+            Bold,
+            Italic,
+            Font,
+            Paragraph
+        } = CKEDITOR;
+
+        ClassicEditor
+            .create(document.querySelector('#long-description'), {
+                licenseKey: 'eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE3Njc5MTY3OTksImp0aSI6ImQ0YTdhMWVmLTM5MGItNGRhYi1iNTg1LWFhNmEzOWQ3YjEyMiIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiXSwiZmVhdHVyZXMiOlsiRFJVUCJdLCJ2YyI6ImI0Njc1NWU3In0.3p7AY9a3fj4AurrTrdBw_qa27RH99OoDsSj_6sK0DB1XKCyE_961SnbdkDZ5hyhdFVrtyCfoqEfPUlSb6xV_dA',
+                plugins: [Essentials, Bold, Italic, Font, Paragraph],
+                toolbar: [
+                    'undo', 'redo', '|', 'bold', 'italic', '|',
+                    'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor'
+                ]
+            })
+            .then(editor => {
+                window.editor = editor;
+            })
+            .catch(error => {
+                console.error(error);
+            });
     </script>
 @stop

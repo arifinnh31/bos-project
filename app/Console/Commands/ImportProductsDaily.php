@@ -23,14 +23,21 @@ class ImportProductsDaily extends Command
             return;
         }
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < $totalProducts; $i++) {
             $masterProduct = $gineeOMSService->listMasterProducts($i, 1);
+
+            if (!isset($masterProduct['content'][0])) {
+                $this->error('No product found at index ' . $i);
+                continue;
+            }
+
             $productId = $masterProduct['content'][0]['productId'];
             $data = $gineeOMSService->getMasterProductDetail($productId);
 
             $product = Product::updateOrCreate(
                 ['ginee_id' => $data['productId']],
                 [
+                    'is_ginee' => true,
                     'ginee_id' => $data['productId'],
                     'name' => $data['name'],
                     'spu' => $data['spu'],
@@ -65,9 +72,9 @@ class ImportProductsDaily extends Command
                     'purchase_duration' => $data['costInfo']['purchasingTime'],
                     'purchase_unit' => $data['costInfo']['purchasingTimeUnit'],
                     'sales_tax_amount' => $data['costInfo']['salesTax']['amount'],
-                    'remarks1' => $data['extraInfo']['additionInfo']['remark1'],
-                    'remarks2' => $data['extraInfo']['additionInfo']['remark2'],
-                    'remarks3' => $data['extraInfo']['additionInfo']['remark3'],
+                    'remarks1' => $data['extraInfo']['additionInfo']['remark1'] ?? null,
+                    'remarks2' => $data['extraInfo']['additionInfo']['remark2'] ?? null,
+                    'remarks3' => $data['extraInfo']['additionInfo']['remark3'] ?? null,
                     'sold' => 0,
                     'review' => 0,
                     'created_at' => $data['createDatetime'],

@@ -9,7 +9,8 @@
 @section('content')
     <div class="card">
         <div class="card-body">
-            <form id="form" action="{{ route('product.update', ['id' => $product->id]) }}" method="POST" enctype="multipart/form-data">
+            <form id="form" action="{{ route('product.update', ['id' => $product->id]) }}" method="POST"
+                enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="type" value="{{ request()->type }}">
@@ -131,10 +132,15 @@
                         </div>
                         <div class="col-md-2 custom-shelf-life">
                             <div class="form-group">
-                                <label for="shelf-life-duration">Shelf Life Duration (days)</label>
-                                <input type="number" id="shelf-life-duration" name="shelf_life_duration"
-                                    class="form-control" placeholder="Please Enter"
-                                    value="{{ $product->shelf_life_duration }}">
+                                <label for="shelf-life-duration">Shelf Life Duration</label>
+                                <div class="input-group">
+                                    <input type="number" id="shelf-life-duration" name="shelf_life_duration"
+                                        class="form-control" placeholder="Please Enter"
+                                        value="{{ $product->shelf_life_duration }}">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">days</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -143,7 +149,8 @@
                             <div class="form-group">
                                 <label for="inbound-limit">Inbound Limit</label>
                                 <input type="number" id="inbound-limit" name="inbound_limit" class="form-control"
-                                    placeholder="Please Enter" value="{{ $product->inbound_limit }}">
+                                    placeholder="Please Enter" min="0.01" max="0.99" step="0.01"
+                                    value="{{ $product->inbound_limit }}">
                             </div>
                         </div>
                         <div class="col-md-2 custom-shelf-life">
@@ -169,7 +176,8 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="short_description">Short description</label>
-                                <textarea id="short_description" name="short_description" class="form-control" placeholder="Please Enter">{{ $product->short_description }}</textarea>
+                                <textarea id="short_description" name="short_description" class="form-control" placeholder="Please Enter"
+                                    maxlength="3000">{{ $product->short_description }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -179,7 +187,7 @@
                             <div class="form-group">
                                 <label for="long-description">Long description</label>
                                 <textarea id="long-description" class="form-control" name='description'
-                                    placeholder="Type your description here and apply it to your product" maxlength="7000">{{ $product->description }}</textarea>
+                                    placeholder="Type your description here and apply it to your product" maxlength="60000">{{ $product->description }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -224,7 +232,7 @@
                                             @endif
                                         </div>
                                         <input type="text" id="tag-input-1" class="form-control tag-input"
-                                            placeholder="Enter a option, for example: Red, etc">
+                                            placeholder="Enter a option, for example: Red, Yellow, etc">
                                         <input type="hidden" name="variantTypes[0][values]" id="values-hidden-1"
                                             value="{{ isset($product->variant_options[0]['values']) ? implode(',', $product->variant_options[0]['values']) : '' }}">
                                     </div>
@@ -282,7 +290,6 @@
                             </tr>
                         </thead>
                         <tbody id="variations-body">
-                            <!-- Isi tabel akan di-generate oleh JavaScript -->
                         </tbody>
                     </table>
 
@@ -304,7 +311,6 @@
                         @endif
                         <input type="file" class="form-control" id="images" name="images[]" multiple
                             accept="image/*">
-                        <div id="preview-images" class="mt-2" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
                     </div>
 
                     <!-- Delivery -->
@@ -313,32 +319,52 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="length">Length (cm)</label>
-                                <input type="number" id="length" name="length" class="form-control"
-                                    placeholder="Please Enter" value="{{ $product->length }}">
+                                <label for="length">Length</label>
+                                <div class="input-group">
+                                    <input type="number" id="length" name="length" class="form-control"
+                                        placeholder="Please Enter" value="{{ $product->length }}">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">cm</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="width">Width (cm)</label>
-                                <input type="number" id="width" name="width" class="form-control"
-                                    placeholder="Please Enter" value="{{ $product->width }}">
+                                <label for="width">Width</label>
+                                <div class="input-group">
+                                    <input type="number" id="width" name="width" class="form-control"
+                                        placeholder="Please Enter" value="{{ $product->width }}">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">cm</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="height">Height (cm)</label>
-                                <input type="number" id="height" name="height" class="form-control"
-                                    placeholder="Please Enter" value="{{ $product->height }}">
+                                <label for="height">Height</label>
+                                <div class="input-group">
+                                    <input type="number" id="height" name="height" class="form-control"
+                                        placeholder="Please Enter" value="{{ $product->height }}">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">cm</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="weight">Weight (g)</label>
-                                <input type="number" id="weight" name="weight" class="form-control"
-                                    placeholder="Please Enter" value="{{ $product->weight }}">
+                                <label for="weight">Weight</label>
+                                <div class="input-group">
+                                    <input type="number" id="weight" name="weight" class="form-control"
+                                        placeholder="Please Enter" value="{{ $product->weight }}">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -433,9 +459,14 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="gross-weight">Gross Weight (g)</label>
-                                <input type="number" id="gross-weight" name="gross_weight" class="form-control"
-                                    placeholder="Please Enter" value="{{ $product->gross_weight }}">
+                                <label for="gross-weight">Gross Weight</label>
+                                <div class="input-group">
+                                    <input type="number" id="gross-weight" name="gross_weight" class="form-control"
+                                        placeholder="Please Enter" value="{{ $product->gross_weight }}">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">g</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -524,7 +555,8 @@
                     <h4 style="font-weight: bold; margin-top: 15px;">Ginee OMS</h4>
 
                     <div class="form-group d-flex align-items-center">
-                        <label for="is-ginee" class="mr-2">{{ $product->is_ginee ? 'Update' : 'Create' }} product to Ginee OMS</label>
+                        <label for="is-ginee" class="mr-2">{{ $product->is_ginee ? 'Update' : 'Create' }} product to
+                            Ginee OMS</label>
                         <input type="checkbox" id="is-ginee" name="is_ginee" value="1" class="form-control"
                             style="width: auto;" {{ $product->is_ginee ? 'checked' : '' }}>
                     </div>
@@ -581,11 +613,13 @@
 @stop
 
 @section('css')
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/44.2.1/ckeditor5.css">
 @stop
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/44.2.1/ckeditor5.umd.js"></script>
     <script>
         document.getElementById('form').addEventListener('keydown', function(event) {
             if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
@@ -856,12 +890,32 @@
             document.getElementById('values-hidden-2').addEventListener('change', generateVariationRows);
 
             generateVariationRows();
-
-            document.querySelector("form").addEventListener("keydown", function(event) {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                }
-            });
         });
+    </script>
+    <script>
+        const {
+            ClassicEditor,
+            Essentials,
+            Bold,
+            Italic,
+            Font,
+            Paragraph
+        } = CKEDITOR;
+
+        ClassicEditor
+            .create(document.querySelector('#long-description'), {
+                licenseKey: 'eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE3Njc5MTY3OTksImp0aSI6ImQ0YTdhMWVmLTM5MGItNGRhYi1iNTg1LWFhNmEzOWQ3YjEyMiIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiXSwiZmVhdHVyZXMiOlsiRFJVUCJdLCJ2YyI6ImI0Njc1NWU3In0.3p7AY9a3fj4AurrTrdBw_qa27RH99OoDsSj_6sK0DB1XKCyE_961SnbdkDZ5hyhdFVrtyCfoqEfPUlSb6xV_dA',
+                plugins: [Essentials, Bold, Italic, Font, Paragraph],
+                toolbar: [
+                    'undo', 'redo', '|', 'bold', 'italic', '|',
+                    'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor'
+                ]
+            })
+            .then(editor => {
+                window.editor = editor;
+            })
+            .catch(error => {
+                console.error(error);
+            });
     </script>
 @stop

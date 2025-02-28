@@ -261,9 +261,4 @@ class GineeOMSService
 
         return $response->json()['data'];
     }
-
-    public function getImage(string $imageId): array
-    {
-        return $this->makeRequest('GET', '/openapi/common/v1/image/get', ['imageId' => $imageId])['data'];
-    }
 }

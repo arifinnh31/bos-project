@@ -219,9 +219,10 @@ class ProductController extends Controller
                 $productId = $masterProduct['data']['productId'];
                 $product->update(['ginee_id' => $productId]);
                 // update variations ginee_id
-                $variationIds = $masterProduct['data']['variationIds'];
+                $masterProduct = $this->gineeOMSService->getMasterProductDetail($product->ginee_id);
+                $variations = $masterProduct['variations'];
                 foreach ($product->productVariations as $index => $variation) {
-                    $variation->update(['ginee_id' => $variationIds[$index]]);
+                    $variation->update(['ginee_id' => $variations[$index]['id']]);
                 }
             }
 
@@ -337,21 +338,22 @@ class ProductController extends Controller
             if ($request->is_ginee) {
                 if ($product->is_ginee) {
                     $this->gineeOMSService->updateMasterProduct($product);
-                    // update variations ginee_id if has variations
+                    // update variations ginee_id
                     $masterProduct = $this->gineeOMSService->getMasterProductDetail($product->ginee_id);
                     $variations = $masterProduct['variations'];
                     foreach ($product->productVariations as $index => $variation) {
                         $variation->update(['ginee_id' => $variations[$index]['id']]);
                     }
                 } else {
-                    $masterProduct = $this->gineeOMSService->createMasterProduct($product);
+                    $productGinee = $this->gineeOMSService->createMasterProduct($product);
                     // update product ginee_id
-                    $productId = $masterProduct['data']['productId'];
+                    $productId = $productGinee['data']['productId'];
                     $product->update(['ginee_id' => $productId]);
                     // update variations ginee_id
-                    $variationIds = $masterProduct['data']['variationIds'];
+                    $masterProduct = $this->gineeOMSService->getMasterProductDetail($product->ginee_id);
+                    $variations = $masterProduct['variations'];
                     foreach ($product->productVariations as $index => $variation) {
-                        $variation->update(['ginee_id' => $variationIds[$index]]);
+                        $variation->update(['ginee_id' => $variations[$index]['id']]);
                     }
                 }
             }
