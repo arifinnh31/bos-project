@@ -26,7 +26,7 @@ class GineeUpdateOrCreate implements ShouldQueue
     public function handle(): void
     {
         $gineeOMSService = new GineeOMSService();
-        $data = $gineeOMSService->getMasterProductDetail($request->productId);
+        $data = $gineeOMSService->getMasterProductDetail($this->request->productId);
 
         $product = Product::updateOrCreate(
             ['ginee_id' => $data['productId']],
