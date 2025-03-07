@@ -7,8 +7,9 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\GineeWebhookController;
 use App\Services\GineeOMSService;
 use App\Services\TokopediaScraperService;
+use App\Http\Middleware\VerifyCsrfToken;
 
-Route::post('ginee/webhook',[GineeWebhookController::class,'handler']);
+Route::post('ginee/webhook', [GineeWebhookController::class, 'handler']);
 
 Route::get('/', function () {
     return redirect('/login');

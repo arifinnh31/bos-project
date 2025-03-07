@@ -149,7 +149,6 @@ class ProductController extends Controller
             // handle product
             $product = Product::create([
                 'name' => $request->name,
-                'is_ginee' => $request->is_ginee ? 1 : 0,
                 'spu' => $request->spu,
                 'full_category_id' => $this->getFullCategoryId($categories, $request->full_category_id),
                 'full_category_name' => $this->getFullCategoryName($categories, $request->full_category_id),
@@ -194,7 +193,7 @@ class ProductController extends Controller
                     'ginee_id' => null,
                     'name' => $request->name,
                     'purchase_price' => null,
-                    'price' => $variation['price'] ?? 1,
+                    'price' => $variation['price'] ?? 0,
                     'stock' => $variation['stock'],
                     'msku' => $variation['msku'],
                     'barcode' => $variation['barcode'],
@@ -224,6 +223,7 @@ class ProductController extends Controller
                 foreach ($product->productVariations as $index => $variation) {
                     $variation->update(['ginee_id' => $variations[$index]['id']]);
                 }
+                $product->update(['is_ginee' => 1]);
             }
 
             return redirect()->route('product')->with('success', 'Product created successfully');
@@ -265,7 +265,6 @@ class ProductController extends Controller
             // handle product
             $product->update([
                 'name' => $request->name,
-                // 'is_ginee' => $request->is_ginee ? 1 : 0,
                 'spu' => $request->spu,
                 'full_category_id' => $this->getFullCategoryId($categories, $request->full_category_id),
                 'full_category_name' => $this->getFullCategoryName($categories, $request->full_category_id),
@@ -311,7 +310,7 @@ class ProductController extends Controller
                     'ginee_id' => null,
                     'name' => $request->name,
                     'purchase_price' => null,
-                    'price' => $variation['price'] ?? 1,
+                    'price' => $variation['price'] ?? 0,
                     'stock' => $variation['stock'],
                     'msku' => $variation['msku'],
                     'barcode' => $variation['barcode'],
@@ -356,6 +355,7 @@ class ProductController extends Controller
                         $variation->update(['ginee_id' => $variations[$index]['id']]);
                     }
                 }
+                $product->update(['is_ginee' => 1]);
             }
         } else {
             $product = Service::findOrFail($id);
