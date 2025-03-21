@@ -6,10 +6,10 @@ use Illuminate\Console\Command;
 use App\Models\Product;
 use App\Services\GineeOMSService;
 
-class ImportProductsDaily extends Command
+class ImportProducts extends Command
 {
     protected $signature = 'import:products';
-    protected $description = 'Import products daily from external source';
+    protected $description = 'Import products from GineeOMS';
 
     public function handle()
     {
@@ -23,7 +23,7 @@ class ImportProductsDaily extends Command
             return;
         }
 
-        for ($i = 0; $i < $totalProducts; $i++) {
+        for ($i = 0; $i < 1; $i++) {
             $masterProduct = $gineeOMSService->listMasterProducts($i, 1);
 
             if (!isset($masterProduct['content'][0])) {

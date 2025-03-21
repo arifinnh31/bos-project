@@ -2,22 +2,25 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use App\Models\Product;
 use App\Services\GineeOMSService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class GineeProductJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     protected $request;
-    public $queue = 'ginee-products';
 
     /**
      * Create a new job instance.
      */
-    public function __construct($request)
+    public function __construct(array $request)
     {
         $this->request = $request;
     }

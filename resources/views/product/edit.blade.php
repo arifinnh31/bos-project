@@ -39,7 +39,7 @@
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row" id="category-section">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="full_category_id">Select Master Category</label>
@@ -640,6 +640,15 @@
                 placeholder: "Select Master Category",
                 allowClear: true
             });
+
+            function toggleCategorySection() {
+                let isGineeChecked = $("#is-ginee").is(":checked");
+                $("#category-section").toggle(isGineeChecked);
+            }
+
+            toggleCategorySection();
+
+            $("#is-ginee").on("change", toggleCategorySection);
         });
 
         function toggleShelfLife() {
@@ -715,7 +724,7 @@
             const has_variations = document.getElementById('product-variations').checked;
             tbody.innerHTML = '';
 
-            // Ambil nilai yang sudah ada dari input tersembunyi
+            // Ambil nilai yang sudah ada
             const existingVariations = @json($product->productVariations);
             const existingVariationsLength = existingVariations.length;
 

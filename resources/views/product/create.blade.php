@@ -49,7 +49,7 @@
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row" id="category-section">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="full_category_id">Select Master Category</label>
@@ -64,7 +64,8 @@
                                                 @if (!empty($child['children']))
                                                     @foreach ($child['children'] as $subChild)
                                                         <option value="{{ $subChild['id'] }}">
-                                                            &nbsp;&nbsp;&nbsp;&nbsp;{{ $subChild['name'] }}</option>
+                                                            &nbsp;&nbsp;&nbsp;&nbsp;{{ $subChild['name'] }}
+                                                        </option>
                                                     @endforeach
                                                 @endif
                                             @endforeach
@@ -594,6 +595,15 @@
                 placeholder: "Select Master Category",
                 allowClear: true
             });
+
+            function toggleCategorySection() {
+                let isGineeChecked = $("#is-ginee").is(":checked");
+                $("#category-section").toggle(isGineeChecked);
+            }
+
+            toggleCategorySection();
+
+            $("#is-ginee").on("change", toggleCategorySection);
         });
 
         function toggleShelfLife() {

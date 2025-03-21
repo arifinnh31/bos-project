@@ -4,12 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\GineeWebhookController;
 use App\Services\GineeOMSService;
 use App\Services\TokopediaScraperService;
-use App\Http\Middleware\VerifyCsrfToken;
-
-Route::post('ginee/webhook', [GineeWebhookController::class, 'handler']);
 
 Route::get('/', function () {
     return redirect('/login');

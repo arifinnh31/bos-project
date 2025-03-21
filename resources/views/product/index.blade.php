@@ -74,7 +74,7 @@
                                             {{ $product->nama }}
                                         </a>
                                     </td>
-                                    <td>{{ $product->kategori }}</td>
+                                    <td>{{ $product->kategori ?? '-' }}</td>
                                     <td>{{ $product->type }}</td>
                                     <td>Rp{{ number_format($product->harga, 0, ',', '.') }}</td>
                                 </tr>
